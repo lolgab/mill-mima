@@ -7,7 +7,7 @@ Port of the [MiMa Sbt Plugin](https://github.com/lightbend/mima)
 After importing it in the `build.sc` file:
 
 ```scala
-import $ivy.`com.github.lolgab::mima_mill0.9:x.y.z`
+import $ivy.`com.github.lolgab::mill-mima_mill0.9:x.y.z`
 import com.github.lolgab.mill.mima._
 ```
 
