@@ -7,15 +7,15 @@ Port of the [MiMa Sbt Plugin](https://github.com/lightbend/mima)
 After importing it in the `build.sc` file:
 
 ```scala
-import $ivy.`com.github.lolgab::mill-mima:x.y.z`
+import $ivy.`com.github.lolgab::mima_mill0.9:x.y.z`
 import com.github.lolgab.mill.mima._
 ```
 
 this plugin can be mixed in a `ScalaModule` defining the `mimaPreviousArtifacts`:
 
 ```scala
-  def scalaVersion = "2.13.4"
 object module extends ScalaModule with Mima {
+  def scalaVersion = "2.13.4"
   def mimaPreviousArtifacts = Agg(
     ivy"my_group_id::module:my_previous_version"
   )
