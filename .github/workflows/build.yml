@@ -46,7 +46,7 @@ jobs:
     #   run:
     #     ./mill itest
   publish-sonatype:
-    if: github.repository == 'lolgab/mima-mill' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'lolgab/mill-mima' && contains(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-18.04
     env:
