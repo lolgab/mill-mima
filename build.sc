@@ -7,9 +7,11 @@ import $ivy.`com.goyeau::mill-scalafix:0.2.1`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
+import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
+import com.github.lolgab.mill.mima._
 
-object mima extends ScalaModule with PublishModule with ScalafixModule {
-  def mimaPreviousArtifacts = Agg(ivy"com.github.lolgab::mima_mill0.9:0.0.0-2-04583c")
+object `mill-mima` extends ScalaModule with PublishModule with ScalafixModule with Mima {
+  def mimaPreviousArtifacts = Agg(ivy"com.github.lolgab::mima_mill0.9:0.0.1")
   override def artifactName = s"${super.artifactName()}_mill$millBinaryVersion"
   def pomSettings = PomSettings(
     description = "MiMa Mill Plugin",
@@ -33,12 +35,12 @@ object mima extends ScalaModule with PublishModule with ScalafixModule {
     ivy"com.typesafe::mima-core:0.9.2"
   )
 
-  def scalacOptions = super.scalacOptions() ++ Seq("-Ywarn-unused")
+  def scalacOptions = super.scalacOptions() ++ Seq("-Ywarn-unused", "-deprecation")
 
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.4.4")
 }
 
 object itest extends MillIntegrationTestModule {
   def millTestVersion = "0.9.8"
-  def pluginsUnderTest = Seq(mima)
+  def pluginsUnderTest = Seq(`mill-mima`)
 }

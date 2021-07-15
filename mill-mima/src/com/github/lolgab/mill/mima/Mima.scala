@@ -6,7 +6,6 @@ import mill._
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
-import mill.define.Task
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
@@ -17,10 +16,12 @@ trait Mima extends ScalaModule {
 
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     sanityCheckScalaVersion(scalaVersion())
-    val log = T.ctx.log
+    val log = T.ctx().log
     val mimaLib = new MiMaLib(runClasspath().map(_.path.toIO))
     val resolvedMimaPreviousArtifacts =
-      resolveDepsWithoutTransitive(mimaPreviousArtifacts)()
+      resolveDeps(T.task {
+        mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
+      })()
     val classes = compile().classes.path.toIO
 
     val problemsCount = resolvedMimaPreviousArtifacts.iterator.foldLeft(0) {
@@ -47,24 +48,8 @@ trait Mima extends ScalaModule {
       )
     } else {
       log.ticker("Binary compatibility check passed.")
-      Result.Success()
+      Result.Success(())
     }
-  }
-
-  private def resolveDepsWithoutTransitive(
-      deps: Task[Agg[Dep]],
-      sources: Boolean = false
-  ): Task[Agg[PathRef]] = T.task {
-    Lib.resolveDependencies(
-      repositories = repositoriesTask(),
-      depToDependency =
-        resolveCoursierDependency().apply(_).withTransitive(false),
-      deps = deps(),
-      sources = sources,
-      mapDependencies = Some(mapDependencies()),
-      customizer = resolutionCustomizer(),
-      ctx = Some(implicitly[mill.api.Ctx.Log])
-    )
   }
 
   private def pretty(affected: String)(p: Problem): String = {
