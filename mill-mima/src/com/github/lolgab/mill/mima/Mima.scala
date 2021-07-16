@@ -1,5 +1,7 @@
 package com.github.lolgab.mill.mima
 
+import scala.util.chaining._
+
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.MiMaLib
 import mill._
@@ -26,48 +28,43 @@ trait Mima extends ScalaModule {
     val log = T.ctx().log
     val mimaLib =
       new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
-    val classes = compile().classes.path // .toIO
-    val classesCount =
-      if (os.exists(classes)) os.walk.stream(classes).count() else 0
 
-    if (classesCount == 0) {
-      log.outputStream.println(
-        s"No classfiles found for binary compatibility check in ${classes}"
+    val (classes, classesCount) = compile().classes.path.pipe {
+      case p if os.exists(p) => (p, os.walk.stream(p).count())
+      case _                 => ((T.dest / "emptyClasses").tap(os.makeDir), 0)
+    }
+
+    log.outputStream.println(
+      s"Scanning ${classesCount} classfiles for binary compatibility in ${classes} ..."
+    )
+    val problemsCount = resolvedMimaPreviousArtifacts().iterator.foldLeft(0) {
+      (agg, artifact) =>
+        val prev = artifact.path.toIO
+        val curr = classes.toIO
+
+        def checkBC = mimaLib.collectProblems(prev, curr)
+
+        def checkFC = mimaLib.collectProblems(curr, prev)
+
+        val (backwardProblems, forwardProblems) = mimaCheckDirection() match {
+          case CheckDirection.Backward => (checkBC, Nil)
+          case CheckDirection.Forward  => (Nil, checkFC)
+          case CheckDirection.Both     => (checkBC, checkFC)
+        }
+        val count = backwardProblems.length + forwardProblems.length
+        val doLog = if (count == 0) log.debug(_) else log.error(_)
+        backwardProblems.foreach(problem => doLog(pretty("current")(problem)))
+        forwardProblems.foreach(problem => doLog(pretty("other")(problem)))
+        agg + count
+    }
+
+    if (problemsCount > 0) {
+      Result.Failure(
+        s"Failed binary compatibility check! Found $problemsCount potential problems."
       )
-      Result.Success(())
     } else {
-      log.outputStream.println(
-        s"Scanning ${classesCount} classfiles for binary compatibility in ${classes} ..."
-      )
-      val problemsCount = resolvedMimaPreviousArtifacts().iterator.foldLeft(0) {
-        (agg, artifact) =>
-          val prev = artifact.path.toIO
-          val curr = classes.toIO
-
-          def checkBC = mimaLib.collectProblems(prev, curr)
-
-          def checkFC = mimaLib.collectProblems(curr, prev)
-
-          val (backwardProblems, forwardProblems) = mimaCheckDirection() match {
-            case CheckDirection.Backward => (checkBC, Nil)
-            case CheckDirection.Forward  => (Nil, checkFC)
-            case CheckDirection.Both     => (checkBC, checkFC)
-          }
-          val count = backwardProblems.length + forwardProblems.length
-          val doLog = if (count == 0) log.debug(_) else log.error(_)
-          backwardProblems.foreach(problem => doLog(pretty("current")(problem)))
-          forwardProblems.foreach(problem => doLog(pretty("other")(problem)))
-          agg + count
-      }
-
-      if (problemsCount > 0) {
-        Result.Failure(
-          s"Failed binary compatibility check! Found $problemsCount potential problems."
-        )
-      } else {
-        log.outputStream.println("Binary compatibility check passed")
-        Result.Success(())
-      }
+      log.outputStream.println("Binary compatibility check passed")
+      Result.Success(())
     }
   }
 
