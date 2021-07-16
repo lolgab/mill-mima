@@ -18,19 +18,25 @@ trait Mima extends ScalaModule {
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     sanityCheckScalaVersion(scalaVersion())
     val log = T.ctx().log
-    val mimaLib = new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
+    val mimaLib =
+      new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
     val resolvedMimaPreviousArtifacts =
       resolveDeps(T.task {
         mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
       })()
     val classes = compile().classes.path // .toIO
-    val classesCount = if(os.exists(classes)) os.walk.stream(classes).count() else 0
+    val classesCount =
+      if (os.exists(classes)) os.walk.stream(classes).count() else 0
 
-    if(classesCount == 0) {
-      log.outputStream.println(s"No classfiles found for binary compatibility check in ${classes}")
+    if (classesCount == 0) {
+      log.outputStream.println(
+        s"No classfiles found for binary compatibility check in ${classes}"
+      )
       Result.Success(())
     } else {
-      log.outputStream.println(s"Scanning ${classesCount} classfiles for binary compatibility in ${classes} ...")
+      log.outputStream.println(
+        s"Scanning ${classesCount} classfiles for binary compatibility in ${classes} ..."
+      )
       val problemsCount = resolvedMimaPreviousArtifacts.iterator.foldLeft(0) {
         (agg, artifact) =>
           val prev = artifact.path.toIO
@@ -42,8 +48,8 @@ trait Mima extends ScalaModule {
 
           val (backwardProblems, forwardProblems) = mimaCheckDirection() match {
             case CheckDirection.Backward => (checkBC, Nil)
-            case CheckDirection.Forward => (Nil, checkFC)
-            case CheckDirection.Both => (checkBC, checkFC)
+            case CheckDirection.Forward  => (Nil, checkFC)
+            case CheckDirection.Both     => (checkBC, checkFC)
           }
           val count = backwardProblems.length + forwardProblems.length
           val doLog = if (count == 0) log.debug(_) else log.error(_)
