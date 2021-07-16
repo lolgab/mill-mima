@@ -15,15 +15,17 @@ trait Mima extends ScalaModule {
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
+  def resolvedMimaPreviousArtifacts: T[Agg[PathRef]] = T {
+    resolveDeps(T.task {
+      mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
+    })()
+  }
+
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     sanityCheckScalaVersion(scalaVersion())
     val log = T.ctx().log
     val mimaLib =
       new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
-    val resolvedMimaPreviousArtifacts =
-      resolveDeps(T.task {
-        mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
-      })()
     val classes = compile().classes.path // .toIO
     val classesCount =
       if (os.exists(classes)) os.walk.stream(classes).count() else 0
@@ -37,7 +39,7 @@ trait Mima extends ScalaModule {
       log.outputStream.println(
         s"Scanning ${classesCount} classfiles for binary compatibility in ${classes} ..."
       )
-      val problemsCount = resolvedMimaPreviousArtifacts.iterator.foldLeft(0) {
+      val problemsCount = resolvedMimaPreviousArtifacts().iterator.foldLeft(0) {
         (agg, artifact) =>
           val prev = artifact.path.toIO
           val curr = classes.toIO
