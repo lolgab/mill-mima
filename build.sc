@@ -43,10 +43,13 @@ object `mill-mima` extends ScalaModule with PublishModule with ScalafixModule wi
 object itest extends MillIntegrationTestModule {
   def millTestVersion = "0.9.8"
   def pluginsUnderTest = Seq(`mill-mima`)
+  def testBase = millSourcePath / "src"
   override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] = T {
-    testCases().map(tc => tc -> Seq(
-      TestInvocation.Targets(Seq("prepare")),
-      TestInvocation.Targets(Seq("verify"))
-    ))
+    Seq(
+      PathRef(testBase / "simple") -> Seq(
+        TestInvocation.Targets(Seq("prepare")),
+        TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
+      )
+    )
   }
 }
