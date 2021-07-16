@@ -10,7 +10,6 @@ import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
 import com.github.lolgab.mill.mima._
-import mill.define.TaskModule
 import os.Path
 
 object `mill-mima` extends ScalaModule with PublishModule with ScalafixModule with Mima {
