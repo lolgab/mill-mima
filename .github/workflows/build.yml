@@ -37,19 +37,19 @@ jobs:
         architecture: x64
     - name: Check formatting
       run: 
-        ./mill mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
+        ./mill -i mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
     - name: Check scalafix
       run: 
-        ./mill __.fix --check
+        ./mill -i __.fix --check
     - name: Compile
       run: 
-        ./mill __.compile
+        ./mill -i __.compile
     - name: Publish Artifacts
       run: 
-        ./mill __.publishArtifacts
-    # - name: Integration Test
-    #   run:
-    #     ./mill itest
+        ./mill -i __.publishArtifacts
+    - name: Test
+      run:
+        ./mill -i __.test
   publish-sonatype:
     if: github.repository == 'lolgab/mill-mima' && contains(github.ref, 'refs/tags/')
     needs: build
