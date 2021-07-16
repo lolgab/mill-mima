@@ -14,10 +14,10 @@ object curr extends Common with Mima {
   def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
 }
 
+def prepare() = T.command {
+  prev.publishLocal(sys.props("ivy.home") + "/local")()
+}
+
 def verify() = T.command {
-  val publishPath = prev.repositories.collectFirst { case r: IvyRepository =>
-    r.pattern.string.stripPrefix("file:").takeWhile(_ != '[').dropRight(1)
-  }
-  prev.publishLocal(localIvyRepo = publishPath.get)
   curr.mimaReportBinaryIssues()
 }
