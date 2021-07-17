@@ -9,7 +9,9 @@ import com.typesafe.tools.mima.core.{ProblemFilter => MimaProblemFilter}
 import com.typesafe.tools.mima.lib.MiMaLib
 import mill._
 import mill.api.Result
-import mill.define.{Command, Target, Task}
+import mill.define.Command
+import mill.define.Target
+import mill.define.Task
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
