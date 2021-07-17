@@ -1,5 +1,7 @@
 package com.github.lolgab.mill.mima
 
+import scala.util.chaining._
+
 import com.typesafe.tools.mima.core.MyProblemReporting
 import com.typesafe.tools.mima.core.Problem
 import com.typesafe.tools.mima.core.ProblemFilters
@@ -16,6 +18,12 @@ trait Mima extends ScalaModule with PublishModule {
   def mimaPreviousArtifacts: Target[Agg[Dep]]
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
+
+  private def resolvedMimaPreviousArtifacts: T[Agg[PathRef]] = T {
+    resolveDeps(T.task {
+      mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
+    })()
+  }
 
   /** Filters to apply to binary issues found. Applies both to backward and
     * forward binary compatibility checking.
@@ -43,12 +51,13 @@ trait Mima extends ScalaModule with PublishModule {
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     sanityCheckScalaVersion(scalaVersion())
     val log = T.ctx().log
-    val mimaLib = new MiMaLib(runClasspath().map(_.path.toIO))
-    val resolvedMimaPreviousArtifacts =
-      resolveDeps(T.task {
-        mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
-      })()
-    val classes = compile().classes.path.toIO
+    val mimaLib =
+      new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
+
+    val classes = compile().classes.path.pipe {
+      case p if os.exists(p) => p
+      case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
+    }
 
     def isReported(
         versionedFilters: Map[String, Seq[ProblemFilter]]
@@ -63,22 +72,28 @@ trait Mima extends ScalaModule with PublishModule {
         mimaVersionedFilters
       )(problem)
     }
+
     val backwardFilters = mimaBackwardIssueFilters()
     val forwardFilters = mimaForwardIssueFilters()
 
+    log.outputStream.println(
+      s"Scanning binary compatibility in ${classes} ..."
+    )
     val (problemsCount, filteredCount) =
-      resolvedMimaPreviousArtifacts.iterator.foldLeft((0, 0)) {
+      resolvedMimaPreviousArtifacts().iterator.foldLeft((0, 0)) {
         case ((totalAgg, filteredAgg), artifact) =>
           val prev = artifact.path.toIO
-          val curr = classes
+          val curr = classes.toIO
+
           def checkBC = mimaLib.collectProblems(prev, curr)
+
           def checkFC = mimaLib.collectProblems(curr, prev)
+
           val (backward, forward) = mimaCheckDirection() match {
             case CheckDirection.Backward => (checkBC, Nil)
             case CheckDirection.Forward  => (Nil, checkFC)
             case CheckDirection.Both     => (checkBC, checkFC)
           }
-
           val backErrors = backward.filter(isReported(backwardFilters))
           val forwErrors = forward.filter(isReported(forwardFilters))
           val count = backErrors.size + forwErrors.size
@@ -96,7 +111,7 @@ trait Mima extends ScalaModule with PublishModule {
         s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
       )
     } else {
-      log.ticker("Binary compatibility check passed.")
+      log.outputStream.println("Binary compatibility check passed")
       Result.Success(())
     }
   }
