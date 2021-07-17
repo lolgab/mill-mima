@@ -1,8 +1,8 @@
 package com.github.lolgab.mill.mima
 
 import com.typesafe.tools.mima.core.MyProblemReporting
+import com.typesafe.tools.mima.core.Problem
 import com.typesafe.tools.mima.core.ProblemFilters
-import com.typesafe.tools.mima.core.{Problem => MimaProblem}
 import com.typesafe.tools.mima.core.{ProblemFilter => MimaProblemFilter}
 import com.typesafe.tools.mima.lib.MiMaLib
 import mill._
@@ -52,7 +52,7 @@ trait Mima extends ScalaModule with PublishModule {
 
     def isReported(
         versionedFilters: Map[String, Seq[ProblemFilter]]
-    )(problem: MimaProblem) = {
+    )(problem: Problem) = {
       val filters = mimaBinaryIssueFilters().map(problemFilterToMima)
       val mimaVersionedFilters = versionedFilters.map { case (k, v) =>
         k -> v.map(problemFilterToMima)
@@ -101,7 +101,7 @@ trait Mima extends ScalaModule with PublishModule {
     }
   }
 
-  private def pretty(affected: String)(p: MimaProblem): String = {
+  private def pretty(affected: String)(p: Problem): String = {
     val desc = p.description(affected)
     val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
     s" * $desc$howToFilter"
