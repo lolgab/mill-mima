@@ -17,7 +17,7 @@ import mill.scalalib.api.Util.scalaBinaryVersion
 trait Mima extends ScalaModule with PublishModule {
 
   /** Set of versions to check binary compatibility against. */
-  def mimaPreviousVersions: Target[Seq[String]] = Seq()
+  def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
 
   /** Set of artifacts to check binary compatibility against. By default this is
     * derived from [[mimaPreviousVersions]].

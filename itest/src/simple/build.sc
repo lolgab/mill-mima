@@ -11,7 +11,7 @@ trait Common extends ScalaModule with PublishModule {
 }
 object prev extends Common
 object curr extends Common with Mima {
-  def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
+  def mimaPreviousVersions = T(Seq("0.0.1"))
 }
 
 def prepare() = T.command {
@@ -19,5 +19,9 @@ def prepare() = T.command {
 }
 
 def verify() = T.command {
-  curr.mimaReportBinaryIssues()
+  // tests mimaPreviousVersions
+  assert(curr.mimaPreviousArtifacts() == Agg(ivy"org::prev:0.0.1"))
+  // tests resolution and issue reporting
+  curr.mimaReportBinaryIssues()()
+  ()
 }
