@@ -12,15 +12,14 @@ trait Common extends ScalaModule with PublishModule {
 }
 object prev extends Common
 object curr extends Common with Mima {
-  def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
+  override def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
 }
 
-val repo = sys.props("ivy.home") + "/local"
-
 def prepare() = T.command {
-  prev.publishLocal(repo)()
+  prev.publishLocal(sys.props("ivy.home") + "/local")()
 }
 
 def verify() = T.command {
   curr.mimaReportBinaryIssues()()
+  ()
 }
