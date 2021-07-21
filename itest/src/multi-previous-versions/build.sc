@@ -15,7 +15,7 @@ trait Common extends ScalaModule with PublishModule {
 }
 object prev extends Common
 object prev2 extends Common {
-  override def millSourcePath = prev.millSourcePath
+  override def millSourcePath = curr.millSourcePath
   override def artifactName = "prev"
   override def publishVersion = "0.0.2"
 }
@@ -24,10 +24,20 @@ object prev3 extends Common {
   override def artifactName = "prev"
   override def publishVersion = "0.0.3"
 }
+
 object curr extends Common with Mima {
   def mimaPreviousArtifacts = T(
     Agg(
       ivy"org::prev:0.0.1",
+      ivy"org::prev:0.0.2"
+    )
+  )
+}
+
+object curr2 extends Common with Mima {
+  override def millSourcePath = curr.millSourcePath
+  def mimaPreviousArtifacts = T(
+    Agg(
       ivy"org::prev:0.0.2",
       ivy"org::prev:0.0.3"
     )
@@ -44,16 +54,12 @@ def prepare() = T.command {
 }
 
 def verify() = T.command {
-
-  assert(curr.mimaPreviousArtifacts().iterator.size == 3)
-
-  // need to resolve all deps, even when they have same org and name
-  // FIXME: can't actually assert that, as there is no access to this in-between result
-  // assert(curr.resolvedMimaPreviousArtifacts().size == 3)
-
-  // expect 4 issue (2 from prev, 2 from prev2, 0 from prev3)
-  // If the target returns the issues someday, we should assert a concrete count here
-  curr.mimaReportBinaryIssues()()
-
+  assert(curr.mimaPreviousArtifacts().iterator.size == 2)
+  assert(curr2.mimaPreviousArtifacts().iterator.size == 2)
+  curr2.mimaReportBinaryIssues()()
   ()
+}
+
+def verifyFail() = T.command {
+  curr.mimaReportBinaryIssues()()
 }
