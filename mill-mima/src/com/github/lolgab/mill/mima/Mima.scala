@@ -15,7 +15,29 @@ import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
 trait Mima extends ScalaModule with PublishModule {
-  def mimaPreviousArtifacts: Target[Agg[Dep]]
+
+  /** Set of versions to check binary compatibility against. */
+  def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
+
+  /** Set of artifacts to check binary compatibility against. By default this is
+    * derived from [[mimaPreviousVersions]].
+    */
+  def mimaPreviousArtifacts: Target[Agg[Dep]] = T {
+    val versions = mimaPreviousVersions().distinct
+    if (versions.isEmpty)
+      Result.Failure(
+        "No previous artifacts configured. Please override mimaPreviousVersions or mimaPreviousArtifacts.",
+        Some(Agg.empty[Dep])
+      )
+    else
+      Result.Success(
+        Agg.from(
+          versions.map(version =>
+            ivy"${pomSettings().organization}:${artifactId()}:${version}"
+          )
+        )
+      )
+  }
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
