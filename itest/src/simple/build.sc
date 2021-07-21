@@ -1,7 +1,6 @@
 import mill._, mill.scalalib._, mill.scalalib.publish._
 import $exec.plugins
 import com.github.lolgab.mill.mima._
-import coursier.ivy.IvyRepository
 
 trait Common extends ScalaModule with PublishModule {
   def scalaVersion = "2.13.4"
@@ -11,7 +10,7 @@ trait Common extends ScalaModule with PublishModule {
 }
 object prev extends Common
 object curr extends Common with Mima {
-  def mimaPreviousVersions = T(Seq("0.0.1"))
+  override def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
 }
 
 def prepare() = T.command {
@@ -19,9 +18,6 @@ def prepare() = T.command {
 }
 
 def verify() = T.command {
-  // tests mimaPreviousVersions
-  assert(curr.mimaPreviousArtifacts() == Agg(ivy"org::prev:0.0.1"))
-  // tests resolution and issue reporting
   curr.mimaReportBinaryIssues()()
   ()
 }
