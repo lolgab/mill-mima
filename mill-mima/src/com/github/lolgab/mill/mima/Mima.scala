@@ -14,7 +14,7 @@ import mill.define.Target
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
-trait Mima extends ScalaModule with PublishModule {
+trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -158,4 +158,11 @@ trait Mima extends ScalaModule with PublishModule {
       problemFilter: ProblemFilter
   ): MimaProblemFilter =
     ProblemFilters.exclude(problemFilter.problem, problemFilter.name)
+
+  override def prepareOffline(): Command[Unit] = T.command {
+    super.prepareOffline()()
+    resolvedMimaPreviousArtifacts()
+    ()
+  }
+
 }
