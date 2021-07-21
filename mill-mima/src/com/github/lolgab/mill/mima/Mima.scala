@@ -33,7 +33,7 @@ trait Mima extends ScalaModule with PublishModule {
       Result.Success(
         Agg.from(
           versions.map(version =>
-            ivy"${pomSettings().organization}:${artifactId()}::${version}"
+            ivy"${pomSettings().organization}:${artifactId()}:${version}"
           )
         )
       )
