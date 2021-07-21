@@ -63,6 +63,10 @@ class itestCross(millVersion: String) extends MillIntegrationTestModule {
         PathRef(testBase / "filters") -> Seq(
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify"))
+        ),
+        PathRef(testBase / "multi-previous-versions") -> Seq(
+          TestInvocation.Targets(Seq("prepare")),
+          TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
         )
       )
     }
