@@ -1,9 +1,13 @@
 package com.github.lolgab.mill.mima
 
-import mill.{Agg, PathRef, T}
+import mill.Agg
+import mill.PathRef
+import mill.T
 import mill.api.Result
 import mill.define.Task
-import mill.scalalib.{CoursierModule, Dep, Lib}
+import mill.scalalib.CoursierModule
+import mill.scalalib.Dep
+import mill.scalalib.Lib
 
 trait ExtraCoursierSupport extends CoursierModule {
 
