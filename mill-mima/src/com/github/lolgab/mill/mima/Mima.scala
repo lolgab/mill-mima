@@ -11,11 +11,14 @@ import mill._
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
-import mill.define.Task
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
-trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
+trait Mima
+    extends ScalaModule
+    with PublishModule
+    with ExtraCoursierSupport
+    with OfflineSupportModule {
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -41,29 +44,6 @@ trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
   }
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
-
-  protected def resolveSeparateDeps(
-      deps: Task[Agg[Dep]],
-      sources: Boolean = false
-  ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
-    val pRepositories = repositoriesTask()
-    val pDepToDependency = resolveCoursierDependency().apply(_)
-    val pDeps = deps()
-    val pMapDeps = mapDependencies()
-    //    val pCustomizer = resolutionCustomizer()
-    pDeps.map { dep =>
-      val Result.Success(resolved) = Lib.resolveDependencies(
-        repositories = pRepositories,
-        depToDependency = pDepToDependency,
-        deps = Agg(dep),
-        sources = sources,
-        mapDependencies = Some(pMapDeps),
-        //        customizer = pCustomizer,
-        ctx = Some(implicitly[mill.api.Ctx.Log])
-      )
-      (dep, resolved)
-    }
-  }
 
   private def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
     Agg.from(
