@@ -126,7 +126,9 @@ trait Mima
           val filteredCount = backward.size + forward.size - count
           val doLog = if (count == 0) log.debug(_) else log.error(_)
           doLog(s"Found ${count} issue when checking against ${prettyDep(dep)}")
-          backErrors.foreach(problem => doLog(prettyProblem("current")(problem)))
+          backErrors.foreach(problem =>
+            doLog(prettyProblem("current")(problem))
+          )
           forwErrors.foreach(problem => doLog(prettyProblem("other")(problem)))
           (totalAgg + count, filteredAgg + filteredCount)
       }
