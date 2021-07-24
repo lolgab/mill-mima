@@ -37,7 +37,10 @@ def prepare() = T.command {
 def verify() = T.command {
   // tests mimaPreviousVersions
   assertEquals(curr.mimaPreviousArtifacts(), Agg(ivy"org:prev_2.13:0.0.1"))
-  assertEquals(curr.js.mimaPreviousArtifacts(), Agg(ivy"org:prev-js_sjs1_2.13:0.0.1"))
+  assertEquals(
+    curr.js.mimaPreviousArtifacts(),
+    Agg(ivy"org:prev-js_sjs1_2.13:0.0.1")
+  )
 }
 
 def verifyFail() = T.command {
