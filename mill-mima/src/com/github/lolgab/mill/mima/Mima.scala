@@ -47,7 +47,7 @@ trait Mima
 
   private def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
     resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
-      p._1 -> p._2.iterator.next
+      p._1 -> p._2.iterator.next()
     )
   }
 
@@ -126,8 +126,8 @@ trait Mima
           val filteredCount = backward.size + forward.size - count
           val doLog = if (count == 0) log.debug(_) else log.error(_)
           doLog(s"Found ${count} issue when checking against ${prettyDep(dep)}")
-          backErrors.foreach(problem => doLog(pretty("current")(problem)))
-          forwErrors.foreach(problem => doLog(pretty("other")(problem)))
+          backErrors.foreach(problem => doLog(prettyProblem("current")(problem)))
+          forwErrors.foreach(problem => doLog(prettyProblem("other")(problem)))
           (totalAgg + count, filteredAgg + filteredCount)
       }
 
@@ -147,7 +147,7 @@ trait Mima
     s"${dep.dep.module.orgName}:${dep.dep.version}"
   }
 
-  private def pretty(affected: String)(p: Problem): String = {
+  private def prettyProblem(affected: String)(p: Problem): String = {
     val desc = p.description(affected)
     val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
     s" * $desc$howToFilter"

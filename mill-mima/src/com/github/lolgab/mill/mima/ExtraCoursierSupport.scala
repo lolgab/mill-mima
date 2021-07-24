@@ -27,7 +27,7 @@ private[mima] trait ExtraCoursierSupport extends CoursierModule {
       sources: Boolean = false
   ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
     val pRepositories = repositoriesTask()
-    val pDepToDependency =
+    val pDepToDependency: Dep => Dependency =
       resolveCoursierDependency().apply(_).withTransitive(false)
     val pDeps = deps()
     val pMapDeps = mapDependencies()
