@@ -1,5 +1,6 @@
 package com.github.lolgab.mill.mima
 
+import coursier.Dependency
 import mill.Agg
 import mill.PathRef
 import mill.T
@@ -9,7 +10,7 @@ import mill.scalalib.CoursierModule
 import mill.scalalib.Dep
 import mill.scalalib.Lib
 
-trait ExtraCoursierSupport extends CoursierModule {
+private[mima] trait ExtraCoursierSupport extends CoursierModule {
 
   /** Resolves each dependency independently.
     *
@@ -21,12 +22,13 @@ trait ExtraCoursierSupport extends CoursierModule {
     *   Tuples containing each dependencies and it's resolved transitive
     *   artifacts.
     */
-  protected def resolveSeparateDeps(
+  protected def resolveSeparateNonTransitiveDeps(
       deps: Task[Agg[Dep]],
       sources: Boolean = false
   ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
     val pRepositories = repositoriesTask()
-    val pDepToDependency = resolveCoursierDependency().apply(_)
+    val pDepToDependency =
+      resolveCoursierDependency().apply(_).withTransitive(false)
     val pDeps = deps()
     val pMapDeps = mapDependencies()
     // API only available for mill 0.10 line

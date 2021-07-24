@@ -46,10 +46,8 @@ trait Mima
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
   private def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
-    Agg.from(
-      resolveSeparateDeps(mimaPreviousArtifacts)().toSeq.map(p =>
-        p._1.exclude("*" -> "*") -> p._2.iterator.next
-      )
+    resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
+      p._1 -> p._2.iterator.next
     )
   }
 
