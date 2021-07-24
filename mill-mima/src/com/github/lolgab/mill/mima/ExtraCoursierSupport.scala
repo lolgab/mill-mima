@@ -23,8 +23,7 @@ private[mima] trait ExtraCoursierSupport extends CoursierModule {
     *   artifacts.
     */
   protected def resolveSeparateNonTransitiveDeps(
-      deps: Task[Agg[Dep]],
-      sources: Boolean = false
+      deps: Task[Agg[Dep]]
   ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
     val pRepositories = repositoriesTask()
     val pDepToDependency: Dep => Dependency =
@@ -38,7 +37,6 @@ private[mima] trait ExtraCoursierSupport extends CoursierModule {
         repositories = pRepositories,
         depToDependency = pDepToDependency,
         deps = Agg(dep),
-        sources = sources,
         mapDependencies = Some(pMapDeps),
         //        customizer = pCustomizer,
         ctx = Some(implicitly[mill.api.Ctx.Log])
