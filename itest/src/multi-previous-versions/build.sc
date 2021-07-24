@@ -9,11 +9,12 @@ import os.Path
 
 trait Common extends ScalaModule with PublishModule {
   def scalaVersion = "2.13.4"
-  def publishVersion = "0.0.1"
   def pomSettings =
     PomSettings("", organization = "org", "", Seq(), VersionControl(), Seq())
 }
-object prev extends Common
+object prev extends Common {
+  def publishVersion = "0.0.1"
+}
 object prev2 extends Common {
   override def millSourcePath = curr.millSourcePath
   override def artifactName = "prev"
@@ -21,6 +22,7 @@ object prev2 extends Common {
 }
 
 object curr extends Common with Mima {
+  def publishVersion = "0.0.3"
   def mimaPreviousArtifacts = T(
     Agg(
       ivy"org::prev:0.0.1",
