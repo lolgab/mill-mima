@@ -19,11 +19,6 @@ object prev2 extends Common {
   override def artifactName = "prev"
   override def publishVersion = "0.0.2"
 }
-object prev3 extends Common {
-  override def millSourcePath = curr.millSourcePath
-  override def artifactName = "prev"
-  override def publishVersion = "0.0.3"
-}
 
 object curr extends Common with Mima {
   def mimaPreviousArtifacts = T(
@@ -34,29 +29,16 @@ object curr extends Common with Mima {
   )
 }
 
-object curr2 extends Common with Mima {
-  override def millSourcePath = curr.millSourcePath
-  def mimaPreviousArtifacts = T(
-    Agg(
-      ivy"org::prev:0.0.2",
-      ivy"org::prev:0.0.3"
-    )
-  )
-}
-
 val repo = sys.props("ivy.home") + "/local"
 
 def prepare() = T.command {
   prev.publishLocal(repo)()
   prev2.publishLocal(repo)()
-  prev3.publishLocal(repo)()
   ()
 }
 
 def verify() = T.command {
   assert(curr.mimaPreviousArtifacts().iterator.size == 2)
-  assert(curr2.mimaPreviousArtifacts().iterator.size == 2)
-  curr2.mimaReportBinaryIssues()()
   ()
 }
 
