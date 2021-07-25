@@ -15,8 +15,9 @@ this plugin can be mixed in a `ScalaModule with PublishModule` defining the `mim
 
 ```scala
 object module extends ScalaModule with PublishModule with Mima {
-  def scalaVersion = "2.13.4"
   def mimaPreviousVersions = Seq("1.0.0", "1.5.0")
+
+  // ... other settings
 }
 ```
 
