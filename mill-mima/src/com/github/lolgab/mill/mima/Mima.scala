@@ -14,7 +14,11 @@ import mill.define.Target
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
-trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
+trait Mima
+    extends ScalaModule
+    with PublishModule
+    with ExtraCoursierSupport
+    with OfflineSupportModule {
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -41,10 +45,10 @@ trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
-  private def resolvedMimaPreviousArtifacts: T[Agg[PathRef]] = T {
-    resolveDeps(T.task {
-      mimaPreviousArtifacts().map(_.exclude("*" -> "*"))
-    })()
+  private def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
+    resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
+      p._1 -> p._2.iterator.next()
+    )
   }
 
   /** Filters to apply to binary issues found. Applies both to backward and
@@ -103,7 +107,7 @@ trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
     )
     val (problemsCount, filteredCount) =
       resolvedMimaPreviousArtifacts().iterator.foldLeft((0, 0)) {
-        case ((totalAgg, filteredAgg), artifact) =>
+        case ((totalAgg, filteredAgg), (dep, artifact)) =>
           val prev = artifact.path.toIO
           val curr = classes.toIO
 
@@ -121,8 +125,11 @@ trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
           val count = backErrors.size + forwErrors.size
           val filteredCount = backward.size + forward.size - count
           val doLog = if (count == 0) log.debug(_) else log.error(_)
-          backErrors.foreach(problem => doLog(pretty("current")(problem)))
-          forwErrors.foreach(problem => doLog(pretty("other")(problem)))
+          doLog(s"Found ${count} issue when checking against ${prettyDep(dep)}")
+          backErrors.foreach(problem =>
+            doLog(prettyProblem("current")(problem))
+          )
+          forwErrors.foreach(problem => doLog(prettyProblem("other")(problem)))
           (totalAgg + count, filteredAgg + filteredCount)
       }
 
@@ -138,7 +145,11 @@ trait Mima extends ScalaModule with PublishModule with OfflineSupportModule {
     }
   }
 
-  private def pretty(affected: String)(p: Problem): String = {
+  private def prettyDep(dep: Dep): String = {
+    s"${dep.dep.module.orgName}:${dep.dep.version}"
+  }
+
+  private def prettyProblem(affected: String)(p: Problem): String = {
     val desc = p.description(affected)
     val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
     s" * $desc$howToFilter"
