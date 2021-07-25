@@ -11,14 +11,13 @@ import $ivy.`com.github.lolgab::mill-mima_mill0.9:x.y.z`
 import com.github.lolgab.mill.mima._
 ```
 
-this plugin can be mixed in a `ScalaModule` defining the `mimaPreviousArtifacts`:
+this plugin can be mixed in a `ScalaModule with PublishModule` defining the `mimaPreviousVersions`:
 
 ```scala
-object module extends ScalaModule with Mima {
-  def scalaVersion = "2.13.4"
-  def mimaPreviousArtifacts = Agg(
-    ivy"my_group_id::module:my_previous_version"
-  )
+object module extends ScalaModule with PublishModule with Mima {
+  def mimaPreviousVersions = Seq("1.0.0", "1.5.0")
+
+  // ... other settings
 }
 ```
 
@@ -57,5 +56,17 @@ You may also use wildcards in the package and/or the top `Problem` parent type f
 ```scala
 override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
   ProblemFilters.exclude[MissingClassProblem]("com.example.mylibrary.internal.Foo")
+)
+```
+
+### mimaPreviousArtifacts
+
+If your previous artifacts have a different `groupId` or `artifactId` you can check against them
+using `mimaPreviousArtifacts` instead of `millPreviousVersions` (since `millPreviousVersions`
+assumes the same `groupId` and `artifactId`):
+
+```scala
+def mimaPreviousArtifacts = Agg(
+  ivy"my_group_id::module:my_previous_version"
 )
 ```
