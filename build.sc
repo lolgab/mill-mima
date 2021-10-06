@@ -24,10 +24,7 @@ object `mill-mima`
     organization = "com.github.lolgab",
     url = "https://github.com/lolgab/mill-mima",
     licenses = Seq(License.`Apache-2.0`),
-    scm = SCM(
-      "git://github.com/lolgab/mill-mima.git",
-      "scm:git://github.com/lolgab/mill-mima.git"
-    ),
+    versionControl = VersionControl.github("lolgab", "mill-mima"),
     developers = Seq(
       Developer("lolgab", "Lorenzo Gabriele", "https://github.com/lolgab")
     )
@@ -36,8 +33,10 @@ object `mill-mima`
   def scalaVersion = "2.13.4"
   def millVersion = "0.9.3"
   def millBinaryVersion = millVersion.split('.').take(2).mkString(".")
+  override def compileIvyDeps = Agg(
+    ivy"com.lihaoyi::mill-scalalib:$millVersion"
+  )
   def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"com.lihaoyi::mill-scalalib:$millVersion",
     ivy"com.typesafe::mima-core:1.0.1"
   )
 
