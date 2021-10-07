@@ -59,6 +59,21 @@ override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
 )
 ```
 
+### mimaExcludeAnnotations
+
+The fully-qualified class names of annotations that exclude parts of the API from problem checking.
+
+```scala
+import com.typesafe.tools.mima.core._
+
+object mylibrary extends ScalaModule with PublishModule with Mima {
+  override def mimaExcludeAnnotations = Seq(
+    Seq("mima.annotation.exclude")
+  )
+  // ... other settings
+}
+```
+
 ### mimaPreviousArtifacts
 
 If your previous artifacts have a different `groupId` or `artifactId` you can check against them

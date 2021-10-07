@@ -38,7 +38,7 @@ object `mill-mima`
   def millBinaryVersion = millVersion.split('.').take(2).mkString(".")
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:$millVersion",
-    ivy"com.typesafe::mima-core:0.9.2"
+    ivy"com.typesafe::mima-core:1.0.1"
   )
 
   def scalacOptions =

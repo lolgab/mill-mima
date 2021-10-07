@@ -74,6 +74,13 @@ trait Mima
     Map.empty[String, Seq[ProblemFilter]]
   }
 
+  /** The fully-qualified class names of annotations that exclude parts of the
+    * API from problem checking.
+    */
+  def mimaExcludeAnnotations: Target[Seq[String]] = T {
+    Seq.empty[String]
+  }
+
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     sanityCheckScalaVersion(scalaVersion())
     val log = T.ctx().log
@@ -101,6 +108,7 @@ trait Mima
 
     val backwardFilters = mimaBackwardIssueFilters()
     val forwardFilters = mimaForwardIssueFilters()
+    val excludeAnnos = mimaExcludeAnnotations().toList
 
     log.outputStream.println(
       s"Scanning binary compatibility in ${classes} ..."
@@ -111,9 +119,9 @@ trait Mima
           val prev = artifact.path.toIO
           val curr = classes.toIO
 
-          def checkBC = mimaLib.collectProblems(prev, curr)
+          def checkBC = mimaLib.collectProblems(prev, curr, excludeAnnos)
 
-          def checkFC = mimaLib.collectProblems(curr, prev)
+          def checkFC = mimaLib.collectProblems(curr, prev, excludeAnnos)
 
           val (backward, forward) = mimaCheckDirection() match {
             case CheckDirection.Backward => (checkBC, Nil)
