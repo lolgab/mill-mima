@@ -31,7 +31,7 @@ object `mill-mima`
   )
   def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = "2.13.4"
-  def millVersion = "0.9.3"
+  def millVersion = "0.9.3" // scala-steward:off
   def millBinaryVersion = millVersion.split('.').take(2).mkString(".")
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:$millVersion"
