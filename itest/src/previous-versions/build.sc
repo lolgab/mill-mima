@@ -1,4 +1,5 @@
 import $exec.plugins
+
 import $ivy.`org.scalameta::munit:0.7.27`
 
 import com.github.lolgab.mill.mima._
