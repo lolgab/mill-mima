@@ -33,7 +33,7 @@ object `mill-mima`
   def scalaVersion = "2.13.4"
   def millVersion = "0.9.3"
   def millBinaryVersion = millVersion.split('.').take(2).mkString(".")
-  override def compileIvyDeps = Agg(
+  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:$millVersion"
   )
   def ivyDeps = super.ivyDeps() ++ Agg(
