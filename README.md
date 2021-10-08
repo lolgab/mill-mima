@@ -89,3 +89,28 @@ def mimaPreviousArtifacts = Agg(
   ivy"my_group_id::module:my_previous_version"
 )
 ```
+
+### mimaBackwardIssueFilters
+
+Filters to apply to binary issues found grouped by version of a module
+checked against. These filters only apply to backward compatibility
+checking.
+
+Signature: 
+
+```scala
+def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
+```
+
+
+### mimaForwardIssueFilters
+
+Filters to apply to binary issues found grouped by version of a module
+checked against. These filters only apply to forward compatibility
+checking.
+
+Signature: 
+
+```scala
+def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
+```
