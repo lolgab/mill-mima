@@ -114,3 +114,29 @@ Signature:
 ```scala
 def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
 ```
+
+## Changelog
+
+### 0.0.5
+
+- Add `mimaExcludeAnnotations` target
+- Bump MiMa to `1.0.1`
+- Fix `mill-scalalib` dependency to be in `compileIvyDeps`
+
+### 0.0.4
+
+- Add support to resolve multiple previous artifacts
+- Add `mimaPreviousVersions` target
+- Redefine `prepareOffline` to include MiMa artifacts
+
+### 0.0.3
+
+- Support problem filters
+
+### 0.0.2
+
+- Change artifact name from `mima_mill0.9` to `mill-mima_mill0.9`
+
+### 0.0.1
+
+First release
