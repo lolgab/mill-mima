@@ -4,7 +4,7 @@ import mill.scalalib._
 import mill.scalalib.api.Util.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1-16-63f11c`
 import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix:0.2.1`
 import com.goyeau.mill.scalafix.ScalafixModule
