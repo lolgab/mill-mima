@@ -1,9 +1,10 @@
 import mill._
 
 import mill.scalalib._
+import mill.scalalib.api.Util.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1-16-63f11c`
 import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix:0.2.1`
 import com.goyeau.mill.scalafix.ScalafixModule
@@ -13,13 +14,24 @@ import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
 import com.github.lolgab.mill.mima._
 import os.Path
 
-object `mill-mima`
+val millVersions = Seq("0.9.3", "0.10.0-M4")
+val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
+
+def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(millVersion)
+def millVersion(binaryVersion: String) = millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
+
+object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions: _*)
+class MillMimaCross(millBinaryVersion: String)
     extends ScalaModule
     with PublishModule
     with ScalafixModule
     with Mima {
-  def mimaPreviousArtifacts = Agg(ivy"com.github.lolgab::mima_mill0.9:0.0.1")
-  override def artifactName = s"${super.artifactName()}_mill$millBinaryVersion"
+  def mimaPreviousArtifacts = Agg(
+    ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
+  )
+  override def millSourcePath = super.millSourcePath / os.up
+  override def artifactName = s"mill-mima_mill$millBinaryVersion"
+
   def pomSettings = PomSettings(
     description = "MiMa Mill Plugin",
     organization = "com.github.lolgab",
@@ -32,10 +44,8 @@ object `mill-mima`
   )
   def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = "2.13.4"
-  def millVersion = "0.9.3" // scala-steward:off
-  def millBinaryVersion = millVersion.split('.').take(2).mkString(".")
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
-    ivy"com.lihaoyi::mill-scalalib:$millVersion"
+    ivy"com.lihaoyi::mill-scalalib:${millVersion(millBinaryVersion)}"
   )
   def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"com.typesafe::mima-core:1.0.1"
@@ -47,11 +57,11 @@ object `mill-mima`
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.4.4")
 }
 
-object itest extends Cross[itestCross]("0.9.3", "0.9.7", "0.9.8")
+object itest extends Cross[itestCross]("0.9.3", "0.9.7", "0.9.8", "0.10.0-M4")
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
   def millTestVersion = millVersion
-  def pluginsUnderTest = Seq(`mill-mima`)
+  def pluginsUnderTest = Seq(`mill-mima`(millBinaryVersion(millVersion)))
   def testBase = millSourcePath / "src"
   override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
     T {
