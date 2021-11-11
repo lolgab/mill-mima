@@ -14,7 +14,7 @@ import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
 import com.github.lolgab.mill.mima._
 import os.Path
 
-val millVersions = Seq("0.9.3", "0.10.0-M3") // scala-steward:off
+val millVersions = Seq("0.9.3", "0.10.0-M4") // scala-steward:off
 
 def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
   millVersion
@@ -63,7 +63,7 @@ class MillMimaCross(millVersion: String)
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.4.4")
 }
 
-object itest extends Cross[itestCross]("0.9.3", "0.9.7", "0.9.8", "0.10.0-M3")
+object itest extends Cross[itestCross]("0.9.3", "0.9.7", "0.9.8", "0.10.0-M4")
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
   def millTestVersion = millVersion
