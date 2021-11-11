@@ -117,6 +117,10 @@ def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
 
 ## Changelog
 
+### 0.0.6
+
+- Support Mill 0.10.0-M4
+
 ### 0.0.5
 
 - Add `mimaExcludeAnnotations` target
