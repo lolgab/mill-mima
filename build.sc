@@ -17,8 +17,11 @@ import os.Path
 val millVersions = Seq("0.9.3", "0.10.0-M4")
 val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
 
-def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(millVersion)
-def millVersion(binaryVersion: String) = millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
+def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
+  millVersion
+)
+def millVersion(binaryVersion: String) =
+  millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
 
 object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions: _*)
 class MillMimaCross(millBinaryVersion: String)
