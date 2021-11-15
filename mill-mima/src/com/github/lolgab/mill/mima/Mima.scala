@@ -159,7 +159,9 @@ trait Mima
 
   private def prettyProblem(affected: String)(p: Problem): String = {
     val desc = p.description(affected)
-    val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
+    val howToFilter = p.howToFilter.fold("")(s =>
+      s"\n   filter with: ${s.replace("ProblemFilters.exclude", ("ProblemFilter.exclude"))}"
+    )
     s" * $desc$howToFilter"
   }
 
