@@ -14,11 +14,10 @@ import mill.define.Target
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaBinaryVersion
 
-trait Mima
+private[mima] trait MimaBase
     extends ScalaModule
     with PublishModule
-    with ExtraCoursierSupport
-    with OfflineSupportModule {
+    with ExtraCoursierSupport {
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -45,7 +44,7 @@ trait Mima
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
-  private def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
+  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
     resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
       p._1 -> p._2.iterator.next()
     )
@@ -177,11 +176,5 @@ trait Mima
       problemFilter: ProblemFilter
   ): MimaProblemFilter =
     ProblemFilters.exclude(problemFilter.problem, problemFilter.name)
-
-  override def prepareOffline(): Command[Unit] = T.command {
-    super.prepareOffline()()
-    resolvedMimaPreviousArtifacts()
-    ()
-  }
 
 }
