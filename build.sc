@@ -6,7 +6,7 @@ import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
 import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1-16-63f11c`
 import de.tobiasroeser.mill.integrationtest._
-import $ivy.`com.goyeau::mill-scalafix:0.2.1`
+import $ivy.`com.goyeau::mill-scalafix:0.2.5`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
@@ -14,7 +14,7 @@ import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
 import com.github.lolgab.mill.mima._
 import os.Path
 
-val millVersions = Seq("0.9.3", "0.10.0-M4")
+val millVersions = Seq("0.9.3", "0.10.0-M5")
 val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
 
 def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
@@ -45,6 +45,9 @@ class MillMimaCross(millBinaryVersion: String)
       Developer("lolgab", "Lorenzo Gabriele", "https://github.com/lolgab")
     )
   )
+  override def sources = T.sources(
+    super.sources() ++ Seq(millSourcePath / s"src-mill$millBinaryVersion").map(PathRef(_))
+  )
   def publishVersion = VcsVersion.vcsState().format()
   def scalaVersion = "2.13.4"
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
@@ -60,7 +63,10 @@ class MillMimaCross(millBinaryVersion: String)
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.4.4")
 }
 
-object itest extends Cross[itestCross]("0.9.3", "0.9.7", "0.9.8", "0.10.0-M4")
+object itest extends Cross[itestCross](
+  "0.9.3", "0.9.7", "0.9.8", "0.9.11", 
+  "0.10.0-M5"
+)
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
   def millTestVersion = millVersion
