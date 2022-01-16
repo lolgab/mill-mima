@@ -117,6 +117,18 @@ def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
 
 ## Changelog
 
+### 0.0.9
+
+- Support Mill 0.10
+
+### 0.0.8
+
+- Correct hint in error message to match plugin's ProblemFilter class
+
+### 0.0.7
+
+- Support Mill 0.10.0-M5
+
 ### 0.0.6
 
 - Support Mill 0.10.0-M4
