@@ -4,13 +4,13 @@ import mill.scalalib._
 import mill.scalalib.api.Util.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest_mill0.9:0.4.1-16-63f11c`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.5.0`
 import de.tobiasroeser.mill.integrationtest._
-import $ivy.`com.goyeau::mill-scalafix:0.2.5`
+import $ivy.`com.goyeau::mill-scalafix::0.2.8`
 import com.goyeau.mill.scalafix.ScalafixModule
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.1.4`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mima_mill0.9:0.0.1`
+import $ivy.`com.github.lolgab::mill-mima::0.0.9`
 import com.github.lolgab.mill.mima._
 import os.Path
 

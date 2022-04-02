@@ -2,6 +2,7 @@ package com.github.lolgab.mill.mima
 
 import scala.util.chaining._
 
+import com.github.lolgab.mill.mima.internal.Utils.scalaBinaryVersion
 import com.typesafe.tools.mima.core.MyProblemReporting
 import com.typesafe.tools.mima.core.Problem
 import com.typesafe.tools.mima.core.ProblemFilters
@@ -12,7 +13,6 @@ import mill.api.Result
 import mill.define.Command
 import mill.define.Target
 import mill.scalalib._
-import mill.scalalib.api.Util.scalaBinaryVersion
 
 private[mima] trait MimaBase
     extends ScalaModule
