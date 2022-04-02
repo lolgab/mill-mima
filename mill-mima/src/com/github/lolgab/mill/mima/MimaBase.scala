@@ -12,7 +12,7 @@ import mill.api.Result
 import mill.define.Command
 import mill.define.Target
 import mill.scalalib._
-import mill.scalalib.api.Util.scalaBinaryVersion
+import mill.scalalib.api.ZincWorkerUtil.scalaBinaryVersion
 
 private[mima] trait MimaBase
     extends ScalaModule
