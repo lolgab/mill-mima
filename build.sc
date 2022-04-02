@@ -98,6 +98,10 @@ class itestCross(millVersion: String) extends MillIntegrationTestModule {
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify"))
         ),
+        PathRef(testBase / "exclude-annotations") -> Seq(
+          TestInvocation.Targets(Seq("prepare")),
+          TestInvocation.Targets(Seq("verify"))
+        ),
         PathRef(testBase / "previous-versions") -> Seq(
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify")),
