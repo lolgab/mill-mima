@@ -4,8 +4,6 @@ import scala.annotation.nowarn
 import scala.reflect.ClassTag
 import scala.reflect.classTag
 
-import com.typesafe.tools.mima.core.ProblemRef
-
 class ProblemFilter private (val name: String, val problem: String)
 object ProblemFilter {
   def exclude[P <: ProblemRef: ClassTag](name: String): ProblemFilter =

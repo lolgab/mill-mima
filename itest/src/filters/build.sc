@@ -4,7 +4,6 @@ import mill._
 import mill.scalalib._
 import mill.scalalib.publish._
 import com.github.lolgab.mill.mima._
-import com.typesafe.tools.mima.core.Problem
 
 trait Common extends ScalaModule with PublishModule {
   def scalaVersion = "2.13.4"

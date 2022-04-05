@@ -1,18 +1,16 @@
 package com.github.lolgab.mill.mima
 
-import scala.util.chaining._
-
 import com.github.lolgab.mill.mima.internal.Utils.scalaBinaryVersion
-import com.typesafe.tools.mima.core.MyProblemReporting
-import com.typesafe.tools.mima.core.Problem
-import com.typesafe.tools.mima.core.ProblemFilters
-import com.typesafe.tools.mima.core.{ProblemFilter => MimaProblemFilter}
-import com.typesafe.tools.mima.lib.MiMaLib
+import com.github.lolgab.mill.mima.worker.MimaWorkerExternalModule
 import mill._
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
+import mill.define.Task
 import mill.scalalib._
+
+import scala.jdk.CollectionConverters._
+import scala.util.chaining._
 
 private[mima] trait MimaBase
     extends ScalaModule
@@ -80,103 +78,85 @@ private[mima] trait MimaBase
     Seq.empty[String]
   }
 
-  def mimaReportBinaryIssues(): Command[Unit] = T.command {
-    sanityCheckScalaVersion(scalaVersion())
-    val log = T.ctx().log
-    val mimaLib =
-      new MiMaLib(runClasspath().map(_.path).filter(os.exists).map(_.toIO))
+  private def mimaWorkerClasspath: T[Agg[os.Path]] = T {
+    Lib
+      .resolveDependencies(
+        repositoriesTask(),
+        resolveCoursierDependency().apply(_),
+        Agg(
+          ivy"com.github.lolgab:mill-mima-worker-impl_2.13:${MimaBuildInfo.publishVersion}"
+            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13")
+        ),
+        ctx = Some(T.log)
+      )
+      .map(_.map(_.path))
+  }
 
-    val classes = compile().classes.path.pipe {
+  private def mimaWorker: Task[worker.api.MimaWorkerApi] = T.task {
+    val cp = mimaWorkerClasspath()
+    MimaWorkerExternalModule.mimaWorker().impl(cp)
+  }
+
+  def mimaReportBinaryIssues(): Command[Unit] = T.command {
+    def prettyDep(dep: Dep): String = {
+      s"${dep.dep.module.orgName}:${dep.dep.version}"
+    }
+    val log = T.ctx().log
+    val logDebug: java.util.function.Consumer[String] = log.debug(_)
+    val logError: java.util.function.Consumer[String] = log.error(_)
+    val logPrintln: java.util.function.Consumer[String] =
+      log.outputStream.println(_)
+    val runClasspathIO =
+      runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
+    val current = compile().classes.path.pipe {
       case p if os.exists(p) => p
       case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
+    }.toIO
+
+    val previous = resolvedMimaPreviousArtifacts().iterator.map {
+      case (dep, artifact) =>
+        new worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
+    }.toArray
+
+    val checkDirection = mimaCheckDirection() match {
+      case CheckDirection.Forward  => worker.api.CheckDirection.Forward
+      case CheckDirection.Backward => worker.api.CheckDirection.Backward
+      case CheckDirection.Both     => worker.api.CheckDirection.Both
     }
 
-    def isReported(
-        versionedFilters: Map[String, Seq[ProblemFilter]]
-    )(problem: Problem) = {
-      val filters = mimaBinaryIssueFilters().map(problemFilterToMima)
-      val mimaVersionedFilters = versionedFilters.map { case (k, v) =>
-        k -> v.map(problemFilterToMima)
-      }
-      MyProblemReporting.isReported(
-        publishVersion(),
-        filters,
-        mimaVersionedFilters
-      )(problem)
-    }
+    def toWorkerApi(p: ProblemFilter) =
+      new worker.api.ProblemFilter(p.name, p.problem)
 
-    val backwardFilters = mimaBackwardIssueFilters()
-    val forwardFilters = mimaForwardIssueFilters()
-    val excludeAnnos = mimaExcludeAnnotations().toList
+    val binaryFilters = mimaBinaryIssueFilters().map(toWorkerApi).toArray
+    val backwardFilters =
+      mimaBackwardIssueFilters().view
+        .mapValues(_.map(toWorkerApi).toArray)
+        .toMap
+        .asJava
+    val forwardFilters =
+      mimaForwardIssueFilters().view
+        .mapValues(_.map(toWorkerApi).toArray)
+        .toMap
+        .asJava
 
-    log.outputStream.println(
-      s"Scanning binary compatibility in ${classes} ..."
+    val errorOpt: java.util.Optional[String] = mimaWorker().reportBinaryIssues(
+      scalaBinaryVersion(scalaVersion()),
+      logDebug,
+      logError,
+      logPrintln,
+      checkDirection,
+      runClasspathIO,
+      previous,
+      current,
+      binaryFilters,
+      backwardFilters,
+      forwardFilters,
+      mimaExcludeAnnotations().toArray,
+      publishVersion()
     )
-    val (problemsCount, filteredCount) =
-      resolvedMimaPreviousArtifacts().iterator.foldLeft((0, 0)) {
-        case ((totalAgg, filteredAgg), (dep, artifact)) =>
-          val prev = artifact.path.toIO
-          val curr = classes.toIO
 
-          def checkBC = mimaLib.collectProblems(prev, curr, excludeAnnos)
-
-          def checkFC = mimaLib.collectProblems(curr, prev, excludeAnnos)
-
-          val (backward, forward) = mimaCheckDirection() match {
-            case CheckDirection.Backward => (checkBC, Nil)
-            case CheckDirection.Forward  => (Nil, checkFC)
-            case CheckDirection.Both     => (checkBC, checkFC)
-          }
-          val backErrors = backward.filter(isReported(backwardFilters))
-          val forwErrors = forward.filter(isReported(forwardFilters))
-          val count = backErrors.size + forwErrors.size
-          val filteredCount = backward.size + forward.size - count
-          val doLog = if (count == 0) log.debug(_) else log.error(_)
-          doLog(s"Found ${count} issue when checking against ${prettyDep(dep)}")
-          backErrors.foreach(problem =>
-            doLog(prettyProblem("current")(problem))
-          )
-          forwErrors.foreach(problem => doLog(prettyProblem("other")(problem)))
-          (totalAgg + count, filteredAgg + filteredCount)
-      }
-
-    if (problemsCount > 0) {
-      val filteredNote =
-        if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-      Result.Failure(
-        s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
-      )
-    } else {
-      log.outputStream.println("Binary compatibility check passed")
-      Result.Success(())
-    }
+    if (errorOpt.isPresent()) Result.Failure(errorOpt.get())
+    else Result.Success(())
   }
-
-  private def prettyDep(dep: Dep): String = {
-    s"${dep.dep.module.orgName}:${dep.dep.version}"
-  }
-
-  private def prettyProblem(affected: String)(p: Problem): String = {
-    val desc = p.description(affected)
-    val howToFilter = p.howToFilter.fold("")(s =>
-      s"\n   filter with: ${s.replace("ProblemFilters.exclude", ("ProblemFilter.exclude"))}"
-    )
-    s" * $desc$howToFilter"
-  }
-
-  private def sanityCheckScalaVersion(scalaVersion: String) = {
-    scalaBinaryVersion(scalaVersion) match {
-      case "2.11" | "2.12" | "2.13" | "3" => // ok
-      case scalaVersion =>
-        throw new IllegalArgumentException(
-          s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $scalaVersion"
-        )
-    }
-  }
-
-  private def problemFilterToMima(
-      problemFilter: ProblemFilter
-  ): MimaProblemFilter =
-    ProblemFilters.exclude(problemFilter.problem, problemFilter.name)
 
 }
