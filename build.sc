@@ -45,12 +45,6 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.6.0")
 }
 
-object `mill-mima-worker` extends Common {
-  def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"com.typesafe::mima-core:1.0.1"
-  )
-}
-
 object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions: _*)
 class MillMimaCross(val millBinaryVersion: String) extends Common with BuildInfo with Mima {
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
