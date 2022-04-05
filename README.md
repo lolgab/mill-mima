@@ -7,7 +7,7 @@ Port of the [MiMa Sbt Plugin](https://github.com/lightbend/mima)
 After importing it in the `build.sc` file:
 
 ```scala
-import $ivy.`com.github.lolgab::mill-mima_mill0.9:x.y.z`
+import $ivy.`com.github.lolgab::mill-mima::x.y.z`
 import com.github.lolgab.mill.mima._
 ```
 
@@ -40,8 +40,7 @@ you need to use the `mimaBinaryIssueFilters` setting to filter it out and get `m
 pass, like so:
 
 ```scala
-import import com.github.lolgab.mill.mima.{Mima, ProblemFilter}
-import com.typesafe.tools.mima.core.{MissingClassProblem}
+import com.github.lolgab.mill.mima._
 
 object mylibrary extends ScalaModule with PublishModule with Mima {
   override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
@@ -55,8 +54,7 @@ object mylibrary extends ScalaModule with PublishModule with Mima {
 You may also use wildcards in the package and/or the top `Problem` parent type for such situations:
 
 ```scala
-import import com.github.lolgab.mill.mima.{Mima, ProblemFilter}
-import com.typesafe.tools.mima.core.{MissingClassProblem}
+import com.github.lolgab.mill.mima._
 
 override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
   ProblemFilter.exclude[MissingClassProblem]("com.example.mylibrary.internal.*")
@@ -68,7 +66,7 @@ override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
 The fully-qualified class names of annotations that exclude parts of the API from problem checking.
 
 ```scala
-import com.typesafe.tools.mima.core._
+import com.github.lolgab.mill.mima._
 
 object mylibrary extends ScalaModule with PublishModule with Mima {
   override def mimaExcludeAnnotations = Seq(
@@ -101,7 +99,6 @@ Signature:
 ```scala
 def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
 ```
-
 
 ### mimaForwardIssueFilters
 
