@@ -114,6 +114,12 @@ def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
 
 ## Changelog
 
+### 0.0.10
+
+- Run Mima in a separate classloader.
+  Now `Problem`s are mirrored in the `com.github.lolgab.mill.mima` package
+  instead and the `com.typesafe.tools.mima.core` package
+
 ### 0.0.9
 
 - Support Mill 0.10
