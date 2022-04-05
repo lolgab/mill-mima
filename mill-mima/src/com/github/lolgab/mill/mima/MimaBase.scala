@@ -1,6 +1,7 @@
 package com.github.lolgab.mill.mima
 
 import com.github.lolgab.mill.mima.internal.Utils.scalaBinaryVersion
+import com.github.lolgab.mill.mima.worker.MimaBuildInfo
 import com.github.lolgab.mill.mima.worker.MimaWorkerExternalModule
 import mill._
 import mill.api.Result

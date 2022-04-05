@@ -69,7 +69,7 @@ class MillMimaCross(val millBinaryVersion: String) extends Common with BuildInfo
     "publishVersion" -> publishVersion()
   )
   override def buildInfoObjectName = "MimaBuildInfo"
-  override def buildInfoPackageName = Some("com.github.lolgab.mill.mima")
+  override def buildInfoPackageName = Some("com.github.lolgab.mill.mima.worker")
 }
 
 object `mill-mima-worker-api` extends Common
