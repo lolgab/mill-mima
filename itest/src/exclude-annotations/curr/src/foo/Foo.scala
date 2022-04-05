@@ -1,4 +1,4 @@
 package foo
 
 @exclude
-object Foo {}
+class Foo {}

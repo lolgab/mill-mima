@@ -1,6 +1,6 @@
 package foo
 
 @exclude
-object Foo {
+class Foo {
   def bar(): Unit = {}
 }
