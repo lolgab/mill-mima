@@ -46,7 +46,10 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
 }
 
 object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions: _*)
-class MillMimaCross(val millBinaryVersion: String) extends Common with BuildInfo with Mima {
+class MillMimaCross(val millBinaryVersion: String)
+    extends Common
+    with BuildInfo
+    with Mima {
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def artifactName = s"mill-mima_mill$millBinaryVersion"
   override def millSourcePath = super.millSourcePath / os.up
@@ -54,7 +57,8 @@ class MillMimaCross(val millBinaryVersion: String) extends Common with BuildInfo
     ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
   )
   override def sources = T.sources(
-    super.sources() ++ Seq(millSourcePath / s"src-mill$millBinaryVersion").map(PathRef(_))
+    super.sources() ++ Seq(millSourcePath / s"src-mill$millBinaryVersion")
+      .map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:${millVersion(millBinaryVersion)}"
@@ -74,10 +78,13 @@ object `mill-mima-worker-impl` extends Common {
   )
 }
 
-object itest extends Cross[itestCross](
-  "0.9.7", "0.9.8", "0.9.11", 
-  "0.10.0"
-)
+object itest
+    extends Cross[itestCross](
+      "0.9.7",
+      "0.9.8",
+      "0.9.11",
+      "0.10.0"
+    )
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
   def millTestVersion = millVersion
