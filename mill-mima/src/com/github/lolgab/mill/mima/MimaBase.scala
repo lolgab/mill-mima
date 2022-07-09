@@ -79,6 +79,12 @@ private[mima] trait MimaBase
     Seq.empty[String]
   }
 
+  /** If true, report `IncompatibleSignatureProblem`s.
+    */
+  def mimaReportSignatureProblems: Target[Boolean] = T {
+    false
+  }
+
   private def mimaWorkerClasspath: T[Agg[os.Path]] = T {
     Lib
       .resolveDependencies(
@@ -128,7 +134,13 @@ private[mima] trait MimaBase
     def toWorkerApi(p: ProblemFilter) =
       new worker.api.ProblemFilter(p.name, p.problem)
 
-    val binaryFilters = mimaBinaryIssueFilters().map(toWorkerApi).toArray
+    val incompatibleSignatureProblemFilters =
+      if (mimaReportSignatureProblems()) Seq.empty
+      else Seq(ProblemFilter.exclude[IncompatibleSignatureProblem]("*"))
+    val binaryFilters =
+      (mimaBinaryIssueFilters() ++ incompatibleSignatureProblemFilters)
+        .map(toWorkerApi)
+        .toArray
     val backwardFilters =
       mimaBackwardIssueFilters().view
         .mapValues(_.map(toWorkerApi).toArray)
