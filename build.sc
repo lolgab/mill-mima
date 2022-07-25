@@ -81,9 +81,9 @@ object `mill-mima-worker-impl` extends Common {
 object itest
     extends Cross[itestCross](
       "0.9.7",
-      "0.9.8",
-      "0.9.11",
-      "0.10.0"
+      "0.9.12",
+      "0.10.0",
+      "0.10.5"
     )
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
