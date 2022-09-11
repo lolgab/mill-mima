@@ -6,7 +6,7 @@ import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
 import mill.contrib.buildinfo.BuildInfo
 import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.5.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.6.1`
 import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix::0.2.10`
 import com.goyeau.mill.scalafix.ScalafixModule
