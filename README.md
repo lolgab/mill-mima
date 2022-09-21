@@ -126,9 +126,13 @@ def mimaReportSignatureProblems = true
 
 ## Changelog
 
-### 0.0.11
+### 0.0.13
 
-- Add support for `mimaReportSignatureProblems`
+- Update MiMa to `1.1.1`
+
+### 0.0.12
+
+- Add `ReadWriter`s for `CheckDirection`
 
 ### 0.0.10
 
