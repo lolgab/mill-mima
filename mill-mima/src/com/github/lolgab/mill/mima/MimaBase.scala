@@ -26,9 +26,9 @@ private[mima] trait MimaBase
     */
   def mimaPreviousArtifacts: Target[Agg[Dep]] = T {
     val versions = mimaPreviousVersions().distinct
-    if (versions.isEmpty)
+    if (versions.isEmpty && mimaModules.isEmpty)
       Result.Failure(
-        "No previous artifacts configured. Please override mimaPreviousVersions or mimaPreviousArtifacts.",
+        "No previous artifacts configured. Please override mimaPreviousVersions, mimaModules or mimaPreviousArtifacts.",
         Some(Agg.empty[Dep])
       )
     else
@@ -43,11 +43,17 @@ private[mima] trait MimaBase
 
   def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
 
-  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
-    resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
-      p._1 -> p._2.iterator.next()
-    )
-  }
+  /** List of modules to check binary compatibility against. Useful to check
+    * compatibility between Scala 2.13 and 3 version of the same module.
+    */
+  def mimaModules: Seq[ScalaModule] = Seq.empty[ScalaModule]
+
+  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(String, PathRef)]] =
+    T {
+      resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
+        prettyDep(p._1) -> p._2.iterator.next()
+      )
+    }
 
   /** Filters to apply to binary issues found. Applies both to backward and
     * forward binary compatibility checking.
@@ -104,10 +110,23 @@ private[mima] trait MimaBase
     MimaWorkerExternalModule.mimaWorker().impl(cp)
   }
 
+  private def prettyDep(dep: Dep): String = {
+    s"${dep.dep.module.orgName}:${dep.dep.version}"
+  }
+
+  private def mimaEmptyClassesDir: T[os.Path] = T { T.dest }
+
+  private def fromCompilationResult(
+      emptyClassesDir: os.Path,
+      compile: mill.scalalib.api.CompilationResult
+  ) = {
+    compile.classes.path.pipe {
+      case p if os.exists(p) => p
+      case _                 => emptyClassesDir
+    }.toIO
+  }
+
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
-    def prettyDep(dep: Dep): String = {
-      s"${dep.dep.module.orgName}:${dep.dep.version}"
-    }
     val log = T.ctx().log
     val logDebug: java.util.function.Consumer[String] = log.debug(_)
     val logError: java.util.function.Consumer[String] = log.error(_)
@@ -115,15 +134,23 @@ private[mima] trait MimaBase
       log.outputStream.println(_)
     val runClasspathIO =
       runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
-    val current = compile().classes.path.pipe {
-      case p if os.exists(p) => p
-      case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
-    }.toIO
+    val current = fromCompilationResult(mimaEmptyClassesDir(), compile())
 
-    val previous = resolvedMimaPreviousArtifacts().iterator.map {
-      case (dep, artifact) =>
-        new worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
-    }.toArray
+    val previousArtifacts = resolvedMimaPreviousArtifacts().iterator.map {
+      case (prettyDep, artifact) =>
+        new worker.api.Artifact(prettyDep, artifact.path.toIO)
+    }
+
+    val modulesArtifacts = T.traverse(mimaModules) { module =>
+      T.task {
+        new worker.api.Artifact(
+          s"current ${module.artifactId()}",
+          fromCompilationResult(mimaEmptyClassesDir(), module.compile())
+        )
+      }
+    }()
+
+    val previous = (previousArtifacts ++ modulesArtifacts).toArray
 
     val checkDirection = mimaCheckDirection() match {
       case CheckDirection.Forward  => worker.api.CheckDirection.Forward
