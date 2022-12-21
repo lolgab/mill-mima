@@ -37,7 +37,7 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
     )
   )
   def publishVersion = VcsVersion.vcsState().format()
-  def scalaVersion = "2.13.8"
+  def scalaVersion = "2.13.10"
 
   def scalacOptions =
     super.scalacOptions() ++ Seq("-Ywarn-unused", "-deprecation")
@@ -57,7 +57,9 @@ class MillMimaCross(val millBinaryVersion: String)
     ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
   )
   override def sources = T.sources(
-    super.sources() ++ Seq(millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}")
+    super.sources() ++ Seq(
+      millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}"
+    )
       .map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
