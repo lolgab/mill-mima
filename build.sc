@@ -16,7 +16,7 @@ import $ivy.`com.github.lolgab::mill-mima::0.0.13`
 import com.github.lolgab.mill.mima._
 import os.Path
 
-val millVersions = Seq("0.9.7", "0.10.0")
+val millVersions = Seq("0.9.12", "0.10.0", "0.11.0-M1")
 val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
 
 def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
@@ -57,7 +57,7 @@ class MillMimaCross(val millBinaryVersion: String)
     ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
   )
   override def sources = T.sources(
-    super.sources() ++ Seq(millSourcePath / s"src-mill$millBinaryVersion")
+    super.sources() ++ Seq(millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}")
       .map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
@@ -80,10 +80,10 @@ object `mill-mima-worker-impl` extends Common {
 
 object itest
     extends Cross[itestCross](
-      "0.9.7",
       "0.9.12",
       "0.10.0",
-      "0.10.7"
+      "0.10.10",
+      "0.11.0-M1"
     )
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
