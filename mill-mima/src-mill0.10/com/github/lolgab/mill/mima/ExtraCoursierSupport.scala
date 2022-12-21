@@ -30,14 +30,15 @@ private[mima] trait ExtraCoursierSupport extends CoursierModule {
       resolveCoursierDependency().apply(_).withTransitive(false)
     val pDeps = deps()
     val pMapDeps = mapDependencies()
-    val pCustomizer = resolutionCustomizer()
+    // API only available for mill 0.10 line
+    //    val pCustomizer = resolutionCustomizer()
     pDeps.map { dep =>
       val Result.Success(resolved) = Lib.resolveDependencies(
         repositories = pRepositories,
         depToDependency = pDepToDependency,
         deps = Agg(dep),
         mapDependencies = Some(pMapDeps),
-        customizer = pCustomizer,
+        //        customizer = pCustomizer,
         ctx = Some(implicitly[mill.api.Ctx.Log])
       )
       (dep, resolved)
