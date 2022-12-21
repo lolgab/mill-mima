@@ -82,7 +82,7 @@ object itest
     extends Cross[itestCross](
       "0.9.12",
       "0.10.0",
-      "0.10.7",
+      "0.10.10",
       "0.11.0-M1"
     )
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
