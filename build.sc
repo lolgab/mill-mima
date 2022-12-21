@@ -57,7 +57,7 @@ class MillMimaCross(val millBinaryVersion: String)
     ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
   )
   override def sources = T.sources(
-    super.sources() ++ Seq(millSourcePath / s"src-mill$millBinaryVersion")
+    super.sources() ++ Seq(millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}")
       .map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(

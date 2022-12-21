@@ -1,7 +1,6 @@
 package com.github.lolgab.mill.mima
 
 import com.github.lolgab.mill.mima.internal.Utils.scalaBinaryVersion
-import com.github.lolgab.mill.mima.worker.MimaBuildInfo
 import com.github.lolgab.mill.mima.worker.MimaWorkerExternalModule
 import mill._
 import mill.api.Result
@@ -16,7 +15,8 @@ import scala.util.chaining._
 private[mima] trait MimaBase
     extends ScalaModule
     with PublishModule
-    with ExtraCoursierSupport {
+    with ExtraCoursierSupport
+    with VersionSpecific {
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -83,20 +83,6 @@ private[mima] trait MimaBase
     */
   def mimaReportSignatureProblems: Target[Boolean] = T {
     false
-  }
-
-  private def mimaWorkerClasspath: T[Agg[os.Path]] = T {
-    Lib
-      .resolveDependencies(
-        repositoriesTask(),
-        resolveCoursierDependency().apply(_),
-        Agg(
-          ivy"com.github.lolgab:mill-mima-worker-impl_2.13:${MimaBuildInfo.publishVersion}"
-            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13")
-        ),
-        ctx = Some(T.log)
-      )
-      .map(_.map(_.path))
   }
 
   private def mimaWorker: Task[worker.api.MimaWorkerApi] = T.task {

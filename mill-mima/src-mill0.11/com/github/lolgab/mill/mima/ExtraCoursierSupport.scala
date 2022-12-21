@@ -1,16 +1,17 @@
 package com.github.lolgab.mill.mima
 
-import coursier.Dependency
 import mill.Agg
 import mill.PathRef
 import mill.T
 import mill.api.Result
 import mill.define.Task
-import mill.scalalib.CoursierModule
-import mill.scalalib.Dep
-import mill.scalalib.Lib
+import mill.scalalib._
 
-private[mima] trait ExtraCoursierSupport extends CoursierModule {
+import scala.util.chaining._
+
+private[mima] trait ExtraCoursierSupport
+    extends CoursierModule
+    with ScalaModule {
 
   /** Resolves each dependency independently.
     *
@@ -26,19 +27,18 @@ private[mima] trait ExtraCoursierSupport extends CoursierModule {
       deps: Task[Agg[Dep]]
   ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
     val pRepositories = repositoriesTask()
-    val pDepToDependency: Dep => Dependency =
-      resolveCoursierDependency().apply(_).withTransitive(false)
     val pDeps = deps()
-    val pMapDeps = mapDependencies()
-    // API only available for mill 0.10 line
-    //    val pCustomizer = resolutionCustomizer()
+    val scalaV = scalaVersion()
     pDeps.map { dep =>
       val Result.Success(resolved) = Lib.resolveDependencies(
         repositories = pRepositories,
-        depToDependency = pDepToDependency,
-        deps = Agg(dep),
-        mapDependencies = Some(pMapDeps),
-        //        customizer = pCustomizer,
+        deps = Agg(dep).map(dep =>
+          Lib
+            .depToBoundDep(dep, scalaV)
+            .tap(dependency =>
+              dependency.copy(dep = dependency.dep.withTransitive(false))
+            )
+        ),
         ctx = Some(implicitly[mill.api.Ctx.Log])
       )
       (dep, resolved)
