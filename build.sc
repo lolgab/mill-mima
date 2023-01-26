@@ -85,7 +85,7 @@ object itest
       "0.9.12",
       "0.10.0",
       "0.10.10",
-      "0.11.0-M2"
+      "0.11.0-M3"
     )
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
