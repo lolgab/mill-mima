@@ -76,7 +76,7 @@ object `mill-mima-worker-api` extends Common
 object `mill-mima-worker-impl` extends Common {
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def ivyDeps = super.ivyDeps() ++ Agg(
-    ivy"com.typesafe::mima-core:1.1.1"
+    ivy"com.typesafe::mima-core:1.1.2"
   )
 }
 
