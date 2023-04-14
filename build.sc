@@ -12,7 +12,7 @@ import $ivy.`com.goyeau::mill-scalafix::0.2.11`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.0.13`
+import $ivy.`com.github.lolgab::mill-mima::0.0.17`
 import com.github.lolgab.mill.mima._
 import os.Path
 
