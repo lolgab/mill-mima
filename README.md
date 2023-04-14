@@ -25,13 +25,29 @@ object module extends ScalaModule with PublishModule with Mima {
 
 ### mimaCheckDirection
 
-The required direction of binary compatibility can be set by overriding `mimaCheckDirection`:
+The required direction of binary compatibility can be set in two ways:
 
-```scala
-override def mimaCheckDirection = CheckDirection.Both
-```
+- By setting the `MIMA_CHECK_DIRECTION` environment variable when running Mill
+  ```
+  MIMA_CHECK_DIRECTION=forward mill __.mimaReportBinaryIssues
+  ```
 
-The possible directions are `Backward` (default), `Forward` and `Both`.
+  The possible values are `backward` (default), `forward` and `both`.
+
+  This is useful when you want to check for different directions at the same time,
+  for example when you might want to have separate CI checks for forward and
+  backward compatibility to evaluate if changes introduce source compatibilities.
+
+- By overriding `mimaCheckDirection`:
+
+  ```scala
+  override def mimaCheckDirection = CheckDirection.Both
+  ```
+
+  The possible values are `CheckDirection.Backward` (default), `CheckDirection/Forward` and `CheckDirection.Both`.
+
+  This is useful when the setting is static and you want to keep the setting in
+  your `build.sc` file.
 
 ### mimaBinaryIssueFilters
 

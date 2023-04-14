@@ -1,11 +1,9 @@
 import mill._
-
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
 import mill.contrib.buildinfo.BuildInfo
-import $ivy.`com.lihaoyi::mill-contrib-bloop:$MILL_VERSION`
 import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.6.1`
 import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix::0.2.11`
@@ -53,9 +51,7 @@ class MillMimaCross(val millBinaryVersion: String)
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def artifactName = s"mill-mima_mill$millBinaryVersion"
   override def millSourcePath = super.millSourcePath / os.up
-  def mimaPreviousArtifacts = Agg(
-    ivy"com.github.lolgab::mima_mill$millBinaryVersion:0.0.1"
-  )
+  def mimaPreviousVersions = Seq("0.0.17")
   override def sources = T.sources(
     super.sources() ++ Seq(
       millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}"
