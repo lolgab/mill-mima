@@ -2,7 +2,7 @@ package com.github.lolgab.mill.mima
 
 import upickle.default._
 
-sealed trait CheckDirection
+sealed trait CheckDirection extends Product with Serializable
 object CheckDirection {
   case object Backward extends CheckDirection
   case object Forward extends CheckDirection

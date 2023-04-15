@@ -41,7 +41,22 @@ private[mima] trait MimaBase
       )
   }
 
-  def mimaCheckDirection: Target[CheckDirection] = T { CheckDirection.Backward }
+  private def mimaCheckDirectionInput = T.input {
+    T.env.get("MIMA_CHECK_DIRECTION")
+  }
+
+  /** Compatibility checking direction. */
+  def mimaCheckDirection: Target[CheckDirection] = T {
+    mimaCheckDirectionInput() match {
+      case Some("both")            => Result.Success(CheckDirection.Both)
+      case Some("forward")         => Result.Success(CheckDirection.Forward)
+      case Some("backward") | None => Result.Success(CheckDirection.Backward)
+      case Some(other) =>
+        Result.Failure(
+          s"Invalid check direction \"$other\". Valid values are \"backward\", \"forward\" or \"both\"."
+        )
+    }
+  }
 
   private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
     resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
