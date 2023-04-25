@@ -2,7 +2,7 @@ import mill._
 
 import mill.scalalib._
 import mill.scalalib.publish._
-import $exec.plugins
+import $file.plugins
 import com.github.lolgab.mill.mima._
 
 trait Common extends ScalaModule with PublishModule {
