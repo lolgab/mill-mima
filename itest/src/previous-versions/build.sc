@@ -1,4 +1,4 @@
-import $exec.plugins
+import $file.plugins
 
 import $ivy.`org.scalameta::munit:0.7.27`
 

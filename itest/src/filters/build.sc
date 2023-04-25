@@ -1,4 +1,4 @@
-import $exec.plugins
+import $file.plugins
 
 import mill._
 import mill.scalalib._
