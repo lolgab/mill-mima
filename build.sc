@@ -13,13 +13,32 @@ import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.github.lolgab::mill-mima::0.0.19`
 import com.github.lolgab.mill.mima._
 import os.Path
+import scala.util.Try
 
-val millVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
-val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
+val latestMillDevVersion: Option[String] = {
+  val path = build.millSourcePath / "MILL_DEV_VERSION"
+  interp.watch(path)
+  println(s"Checking for file ${path}")
+  if (os.exists(path)) {
+    Try { Option(os.read(path).trim()).filter(_.nonEmpty) }
+      .recover { _ => None }
+  }.get
+  else None
+}
 
-def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
-  millVersion
-)
+val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
+val millVersions = stableVersions ++ latestMillDevVersion
+val millBinaryVersions = stableVersions.map(
+  scalaNativeBinaryVersion
+) ++ latestMillDevVersion
+
+def millBinaryVersion(millVersion: String) = Some(millVersion) match {
+  case `latestMillDevVersion` => millVersion
+  case _ =>
+    scalaNativeBinaryVersion(
+      millVersion
+    )
+}
 def millVersion(binaryVersion: String) =
   millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
 
@@ -116,4 +135,25 @@ class itestCross(millVersion: String) extends MillIntegrationTestModule {
         )
       )
     }
+}
+
+def findLatestMill(toFile: String = "") = T.command {
+  import coursier._
+  val versions =
+    Versions(
+      cache
+        .FileCache()
+        .withTtl(
+          concurrent.duration.Duration(1, java.util.concurrent.TimeUnit.MINUTES)
+        )
+    )
+      .withModule(mod"com.lihaoyi:mill-main_2.13")
+      .run()
+  println(s"Latest Mill versions: ${versions.latest}")
+  if (toFile.nonEmpty) {
+    val path = os.Path.expandUser(toFile, os.pwd)
+    println(s"Writing file: ${path}")
+    os.write.over(path, versions.latest, createFolders = true)
+  }
+  versions.latest
 }
