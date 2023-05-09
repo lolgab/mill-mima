@@ -15,6 +15,7 @@ import com.github.lolgab.mill.mima._
 import os.Path
 import scala.util.Try
 
+val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
 val latestMillDevVersion: Option[String] = {
   val path = build.millSourcePath / "MILL_DEV_VERSION"
   interp.watch(path)
@@ -24,9 +25,8 @@ val latestMillDevVersion: Option[String] = {
       .recover { _ => None }
   }.get
   else None
-}
+}.filter(!stableVersions.contains(_))
 
-val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
 val millVersions = stableVersions ++ latestMillDevVersion
 val millBinaryVersions = stableVersions.map(
   scalaNativeBinaryVersion
