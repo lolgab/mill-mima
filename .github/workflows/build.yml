@@ -24,10 +24,6 @@ jobs:
         java-version: "8"
         architecture: "x64"
         distribution: "temurin"
-    - name: Add latest Mill dev version
-      if: github.event_name == 'workflow_dispatch'
-      run:
-          ./mill --no-server--disable-ticker findLatestMill --toFile MILL_DEV_VERSION
     - name: Check formatting
       run: 
         ./mill --no-server --disable-ticker mill.scalalib.scalafmt.ScalafmtModule/checkFormatAll __.sources
@@ -65,10 +61,6 @@ jobs:
           java-version: "8"
           architecture: "x64"
           distribution: "temurin"
-      - name: Add latest Mill dev version
-        if: github.event_name == 'workflow_dispatch'
-        run:
-          ./mill --no-server--disable-ticker findLatestMill --toFile MILL_DEV_VERSION
       - name: Publish to Maven Central
         run: |
           if [[ $(git tag --points-at HEAD) != '' ]]; then

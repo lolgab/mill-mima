@@ -1,3 +1,5 @@
+import $file.utils
+
 import mill._
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaNativeBinaryVersion
@@ -17,15 +19,12 @@ import scala.util.Try
 
 val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
 val latestMillDevVersion: Option[String] = {
-  val path = build.millSourcePath / "MILL_DEV_VERSION"
-  interp.watch(path)
-  println(s"Checking for file ${path}")
-  if (os.exists(path)) {
-    Try { Option(os.read(path).trim()).filter(_.nonEmpty) }
-      .recover { _ => None }
-  }.get
-  else None
-}.filter(!stableVersions.contains(_))
+  sys.env
+    .get("GITHUB_EVENT_NAME")
+    .filter(_ == "workflow_dispatch")
+    .map(_ => utils.findLatestDevVersion())
+    .filter(!stableVersions.contains(_))
+}
 
 val millVersions = stableVersions ++ latestMillDevVersion
 val millBinaryVersions = stableVersions.map(
@@ -135,25 +134,4 @@ class itestCross(millVersion: String) extends MillIntegrationTestModule {
         )
       )
     }
-}
-
-def findLatestMill(toFile: String = "") = T.command {
-  import coursier._
-  val versions =
-    Versions(
-      cache
-        .FileCache()
-        .withTtl(
-          concurrent.duration.Duration(1, java.util.concurrent.TimeUnit.MINUTES)
-        )
-    )
-      .withModule(mod"com.lihaoyi:mill-main_2.13")
-      .run()
-  println(s"Latest Mill versions: ${versions.latest}")
-  if (toFile.nonEmpty) {
-    val path = os.Path.expandUser(toFile, os.pwd)
-    println(s"Writing file: ${path}")
-    os.write.over(path, versions.latest, createFolders = true)
-  }
-  versions.latest
 }
