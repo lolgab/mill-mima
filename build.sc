@@ -1,3 +1,5 @@
+import $file.utils
+
 import mill._
 import mill.scalalib._
 import mill.scalalib.api.Util.scalaNativeBinaryVersion
@@ -13,13 +15,29 @@ import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.github.lolgab::mill-mima::0.0.19`
 import com.github.lolgab.mill.mima._
 import os.Path
+import scala.util.Try
 
-val millVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
-val millBinaryVersions = millVersions.map(scalaNativeBinaryVersion)
+val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
+val latestMillDevVersion: Option[String] = {
+  sys.env
+    .get("GITHUB_EVENT_NAME")
+    .filter(_ == "workflow_dispatch")
+    .map(_ => utils.findLatestDevVersion())
+    .filter(!stableVersions.contains(_))
+}
 
-def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(
-  millVersion
-)
+val millVersions = stableVersions ++ latestMillDevVersion
+val millBinaryVersions = stableVersions.map(
+  scalaNativeBinaryVersion
+) ++ latestMillDevVersion
+
+def millBinaryVersion(millVersion: String) = Some(millVersion) match {
+  case `latestMillDevVersion` => millVersion
+  case _ =>
+    scalaNativeBinaryVersion(
+      millVersion
+    )
+}
 def millVersion(binaryVersion: String) =
   millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
 

@@ -9,12 +9,15 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - uses: coursier/cache-action@v6
     - uses: actions/setup-java@v3
       with:
@@ -37,7 +40,7 @@ jobs:
       run:
         ./mill --no-server --disable-ticker __.test
   publish-sonatype:
-    if: github.repository == 'lolgab/mill-mima' && contains(github.ref, 'refs/tags/')
+    if: github.repository == 'lolgab/mill-mima' && (contains(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
     needs: build
     runs-on: ubuntu-22.04
     env:
@@ -50,6 +53,8 @@ jobs:
       LC_ALL: "en_US.UTF-8"
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: coursier/cache-action@v6
       - uses: actions/setup-java@v3
         with:
