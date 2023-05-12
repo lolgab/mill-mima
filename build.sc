@@ -17,26 +17,26 @@ import com.github.lolgab.mill.mima._
 import os.Path
 import scala.util.Try
 
-val stableVersions = Seq("0.9.12", "0.10.0", "0.11.0-M8")
 val latestMillDevVersion: Option[String] = {
   sys.env
     .get("GITHUB_EVENT_NAME")
     .filter(_ == "workflow_dispatch")
     .map(_ => utils.findLatestDevVersion())
-    .filter(!stableVersions.contains(_))
 }
 
-val millVersions = stableVersions ++ latestMillDevVersion
-val millBinaryVersions = stableVersions.map(
-  scalaNativeBinaryVersion
-) ++ latestMillDevVersion
+val millVersions = latestMillDevVersion match {
+  case None          => Seq("0.9.12", "0.10.0", "0.11.0-M8")
+  case Some(version) => Seq(version)
+}
+val itestMillVersions = latestMillDevVersion match {
+  case None          => Seq("0.9.12", "0.10.0", "0.10.12", "0.11.0-M8")
+  case Some(version) => Seq(version)
+}
+val millBinaryVersions = millVersions.map(millBinaryVersion)
 
-def millBinaryVersion(millVersion: String) = Some(millVersion) match {
-  case `latestMillDevVersion` => millVersion
-  case _ =>
-    scalaNativeBinaryVersion(
-      millVersion
-    )
+def millBinaryVersion(millVersion: String) = {
+  if (latestMillDevVersion.contains(millVersion)) millVersion
+  else scalaNativeBinaryVersion(millVersion)
 }
 def millVersion(binaryVersion: String) =
   millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
@@ -94,13 +94,7 @@ object `mill-mima-worker-impl` extends Common {
   )
 }
 
-object itest
-    extends Cross[itestCross](
-      "0.9.12",
-      "0.10.0",
-      "0.10.12",
-      "0.11.0-M8"
-    )
+object itest extends Cross[itestCross](itestMillVersions: _*)
 class itestCross(millVersion: String) extends MillIntegrationTestModule {
   override def millSourcePath: Path = super.millSourcePath / os.up
   def millTestVersion = millVersion
