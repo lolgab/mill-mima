@@ -2,6 +2,7 @@ package com.github.lolgab.mill.mima
 
 import com.github.lolgab.mill.mima.worker.MimaBuildInfo
 import mill._
+import mill.main.BuildInfo
 import mill.scalalib._
 
 private[mima] trait VersionSpecific extends CoursierModule {
