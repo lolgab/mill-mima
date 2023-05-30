@@ -1,0 +1,12 @@
+name: scalafmt
+
+on:
+  - pull_request
+
+jobs:
+  scalafmt:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: lolgab/scalafmt-action@main
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
