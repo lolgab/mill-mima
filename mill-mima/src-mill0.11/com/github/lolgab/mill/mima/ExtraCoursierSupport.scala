@@ -9,7 +9,7 @@ import mill.scalalib._
 
 import scala.util.chaining._
 
-private[mima] trait  ExtraCoursierSupport
+private[mima] trait ExtraCoursierSupport
     extends CoursierModule
     with ScalaModule {
 
