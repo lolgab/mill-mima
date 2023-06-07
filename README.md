@@ -142,6 +142,26 @@ def mimaReportSignatureProblems = true
 
 ## Changelog
 
+### 0.0.23
+
+- Support Mill `0.11.0`
+
+### 0.0.22
+
+- Support Mill `0.11.0-M11`
+
+### 0.0.21
+
+- Support Mill `0.11.0-M10`
+
+### 0.0.20
+
+- Support Mill `0.11.0-M9`
+
+### 0.0.19
+
+- Support Mill `0.11.0-M8`
+
 ### 0.0.18
 
 - Add support for `MIMA_CHECK_DIRECTION` environment variable
