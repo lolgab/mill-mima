@@ -25,11 +25,11 @@ val latestMillDevVersion: Option[String] = {
 }
 
 val millVersions = latestMillDevVersion match {
-  case None          => Seq("0.9.12", "0.10.0", "0.11.0-M11")
+  case None          => Seq("0.9.12", "0.10.0", "0.11.0")
   case Some(version) => Seq(version)
 }
 val itestMillVersions = latestMillDevVersion match {
-  case None          => Seq("0.9.12", "0.10.0", "0.10.12", "0.11.0-M11")
+  case None          => Seq("0.9.12", "0.10.0", "0.10.12", "0.11.0")
   case Some(version) => Seq(version)
 }
 val millBinaryVersions = millVersions.map(millBinaryVersion)
