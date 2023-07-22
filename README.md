@@ -142,6 +142,10 @@ def mimaReportSignatureProblems = true
 
 ## Changelog
 
+### 0.0.24
+
+- Update MiMa to `1.1.3`
+
 ### 0.0.23
 
 - Support Mill `0.11.0`
