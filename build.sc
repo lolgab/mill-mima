@@ -2,7 +2,7 @@ import $file.utils
 
 import mill._
 import mill.scalalib._
-import mill.scalalib.api.Util.scalaNativeBinaryVersion
+import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
 import mill.contrib.buildinfo.BuildInfo
@@ -10,7 +10,7 @@ import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
 import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix::0.3.1`
 import com.goyeau.mill.scalafix.ScalafixModule
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.github.lolgab::mill-mima::0.0.24`
 import com.github.lolgab.mill.mima._
@@ -61,14 +61,15 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
   def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.6.0")
 }
 
-object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions: _*)
-class MillMimaCross(val millBinaryVersion: String)
+object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions)
+trait MillMimaCross
     extends Common
     with BuildInfo
-    with Mima {
+    with Mima
+    with Cross.Module[String] {
+  val millBinaryVersion = crossValue
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def artifactName = s"mill-mima_mill$millBinaryVersion"
-  override def millSourcePath = super.millSourcePath / os.up
   def mimaPreviousVersions = Seq("0.0.17")
   override def sources = T.sources(
     super.sources() ++ Seq(
@@ -79,11 +80,11 @@ class MillMimaCross(val millBinaryVersion: String)
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
     ivy"com.lihaoyi::mill-scalalib:${millVersion(millBinaryVersion)}"
   )
-  override def buildInfoMembers = Map(
-    "publishVersion" -> publishVersion()
+  override def buildInfoMembers = Seq(
+    BuildInfo.Value("publishVersion", publishVersion())
   )
   override def buildInfoObjectName = "MimaBuildInfo"
-  override def buildInfoPackageName = Some("com.github.lolgab.mill.mima.worker")
+  override def buildInfoPackageName = "com.github.lolgab.mill.mima.worker"
 }
 
 object `mill-mima-worker-api` extends Common
@@ -94,9 +95,9 @@ object `mill-mima-worker-impl` extends Common {
   )
 }
 
-object itest extends Cross[itestCross](itestMillVersions: _*)
-class itestCross(millVersion: String) extends MillIntegrationTestModule {
-  override def millSourcePath: Path = super.millSourcePath / os.up
+object itest extends Cross[itestCross](itestMillVersions)
+trait itestCross extends MillIntegrationTestModule with Cross.Module[String] {
+  val millVersion = crossValue
   def millTestVersion = millVersion
   def pluginsUnderTest = Seq(`mill-mima`(millBinaryVersion(millVersion)))
   def temporaryIvyModules = Seq(
