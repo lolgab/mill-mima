@@ -105,15 +105,12 @@ private[mima] trait MimaBase
     MimaWorkerExternalModule.mimaWorker().impl(cp)
   }
 
-  /**
-   *
-   * The `PathRef` to the actual artifact that is being checked for binary compatibility.
-   * Defaults to use the result of the [[jar]] target.
-   *
-   * Up until version mill-mima `0.0.24`, this was implemented as [[compile]]`().classes`,
-   * for compatibility to the sbt plugin.
-   *
-   */
+  /** The `PathRef` to the actual artifact that is being checked for binary
+    * compatibility. Defaults to use the result of the [[jar]] target.
+    *
+    * Up until version mill-mima `0.0.24`, this was implemented as
+    * [[compile]]`().classes`, for compatibility to the sbt plugin.
+    */
   def mimaCurrentArtifact: T[PathRef] = T { jar() }
 
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
