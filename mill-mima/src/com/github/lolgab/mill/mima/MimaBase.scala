@@ -105,7 +105,7 @@ private[mima] trait MimaBase
     MimaWorkerExternalModule.mimaWorker().impl(cp)
   }
 
-  def mimaCurrentArtifact: T[PathRef] = T { compile().classes }
+  def mimaCurrentArtifact: T[PathRef] = T { jar() }
 
   def mimaReportBinaryIssues(): Command[Unit] = T.command {
     def prettyDep(dep: Dep): String = {
