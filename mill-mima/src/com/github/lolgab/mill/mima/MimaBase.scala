@@ -116,7 +116,7 @@ private[mima] trait MimaBase
       log.outputStream.println(_)
     val runClasspathIO =
       runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
-    val current = compile().classes.path.pipe {
+    val current = jar().path.pipe {
       case p if os.exists(p) => p
       case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
     }.toIO
