@@ -104,6 +104,18 @@ def mimaPreviousArtifacts = Agg(
 )
 ```
 
+### mimaCurrentArtifact
+
+The `PathRef` to the actual artifact that is being checked for binary compatibility. Defaults to use the result of the `jar` target.
+
+_Up until version `0.0.24`, this was implemented as `compile().classes`, for compatibility to the sbt plugin._
+
+```scala
+def mimaCurrentArtifact = T {
+  compile().classes
+}
+```
+
 ### mimaBackwardIssueFilters
 
 Filters to apply to binary issues found grouped by version of a module
