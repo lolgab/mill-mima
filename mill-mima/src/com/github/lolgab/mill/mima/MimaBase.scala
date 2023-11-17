@@ -9,7 +9,6 @@ import mill.define.Target
 import mill.define.Task
 import mill.scalalib._
 
-import scala.jdk.CollectionConverters._
 import scala.util.chaining._
 
 private[mima] trait MimaBase
@@ -114,7 +113,7 @@ private[mima] trait MimaBase
   def mimaCurrentArtifact: T[PathRef] = T { jar() }
 
   def mimaReportBinaryIssues(): Command[Unit] = {
-    val scalaBinVersionOrNullTask: Task[Option[String]] = this match {
+    val scalaBinVersionTask: Task[Option[String]] = this match {
       case m: ScalaModule =>
         T.task { Some(scalaBinaryVersion(m.scalaVersion())) }
       case _ => T.task { None }
@@ -124,10 +123,7 @@ private[mima] trait MimaBase
         s"${dep.dep.module.orgName}:${dep.dep.version}"
       }
       val log = T.ctx().log
-      val logDebug: java.util.function.Consumer[String] = log.debug(_)
-      val logError: java.util.function.Consumer[String] = log.error(_)
-      val logPrintln: java.util.function.Consumer[String] =
-        log.outputStream.println(_)
+
       val runClasspathIO =
         runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
       val current = mimaCurrentArtifact().path.pipe {
@@ -135,10 +131,10 @@ private[mima] trait MimaBase
         case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
       }.toIO
 
-      val previous = resolvedMimaPreviousArtifacts().iterator.map {
+      val previous = resolvedMimaPreviousArtifacts().map {
         case (dep, artifact) =>
-          new worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
-      }.toArray
+          worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
+      }.toSeq
 
       val checkDirection = mimaCheckDirection() match {
         case CheckDirection.Forward  => worker.api.CheckDirection.Forward
@@ -147,7 +143,7 @@ private[mima] trait MimaBase
       }
 
       def toWorkerApi(p: ProblemFilter) =
-        new worker.api.ProblemFilter(p.name, p.problem)
+        worker.api.ProblemFilter(name = p.name, problem = p.problem)
 
       val incompatibleSignatureProblemFilters =
         if (mimaReportSignatureProblems()) Seq.empty
@@ -155,37 +151,29 @@ private[mima] trait MimaBase
       val binaryFilters =
         (mimaBinaryIssueFilters() ++ incompatibleSignatureProblemFilters)
           .map(toWorkerApi)
-          .toArray
       val backwardFilters =
-        mimaBackwardIssueFilters().view
-          .mapValues(_.map(toWorkerApi).toArray)
-          .toMap
-          .asJava
+        mimaBackwardIssueFilters().view.mapValues(_.map(toWorkerApi)).toMap
       val forwardFilters =
-        mimaForwardIssueFilters().view
-          .mapValues(_.map(toWorkerApi).toArray)
-          .toMap
-          .asJava
+        mimaForwardIssueFilters().view.mapValues(_.map(toWorkerApi)).toMap
 
-      val errorOrNull: String =
-        mimaWorker().reportBinaryIssues(
-          scalaBinVersionOrNullTask().orNull,
-          logDebug,
-          logError,
-          logPrintln,
-          checkDirection,
-          runClasspathIO,
-          previous,
-          current,
-          binaryFilters,
-          backwardFilters,
-          forwardFilters,
-          mimaExcludeAnnotations().toArray,
-          publishVersion()
-        )
-
-      if (errorOrNull == null) Result.Success(())
-      else Result.Failure(errorOrNull)
+      mimaWorker().reportBinaryIssues(
+        scalaBinVersionTask(),
+        log.debug(_),
+        log.error(_),
+        log.outputStream.println(_),
+        checkDirection,
+        runClasspathIO,
+        previous,
+        current,
+        binaryFilters,
+        backwardFilters,
+        forwardFilters,
+        mimaExcludeAnnotations(),
+        publishVersion()
+      ) match {
+        case Some(error) => Result.Failure(error)
+        case None        => Result.Success(())
+      }
     }
   }
 

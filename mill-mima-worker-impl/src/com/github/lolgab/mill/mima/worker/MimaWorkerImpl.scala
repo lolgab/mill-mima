@@ -7,36 +7,34 @@ import com.typesafe.tools.mima.core.ProblemFilters
 import com.typesafe.tools.mima.core.{ProblemFilter => MimaProblemFilter}
 import com.typesafe.tools.mima.lib.MiMaLib
 
-import scala.jdk.CollectionConverters._
-
 class MimaWorkerImpl extends MimaWorkerApi {
 
   def reportBinaryIssues(
-      scalaBinaryVersionOrNull: String,
-      logDebug: java.util.function.Consumer[String],
-      logError: java.util.function.Consumer[String],
-      logPrintln: java.util.function.Consumer[String],
+      scalaBinaryVersion: Option[String],
+      logDebug: String => Unit,
+      logError: String => Unit,
+      logPrintln: String => Unit,
       checkDirection: CheckDirection,
-      runClasspath: Array[java.io.File],
-      previous: Array[Artifact],
+      runClasspath: Seq[java.io.File],
+      previous: Seq[Artifact],
       current: java.io.File,
-      binaryFilters: Array[ProblemFilter],
-      backwardFilters: java.util.Map[String, Array[ProblemFilter]],
-      forwardFilters: java.util.Map[String, Array[ProblemFilter]],
-      excludeAnnos: Array[String],
+      binaryFilters: Seq[ProblemFilter],
+      backwardFilters: Map[String, Seq[ProblemFilter]],
+      forwardFilters: Map[String, Seq[ProblemFilter]],
+      excludeAnnos: Seq[String],
       publishVersion: String
-  ): String = {
-    sanityCheckScalaBinaryVersion(scalaBinaryVersionOrNull)
+  ): Option[String] = {
+    sanityCheckScalaBinaryVersion(scalaBinaryVersion)
 
     val mimaLib = new MiMaLib(runClasspath.toSeq)
 
     def isReported(
-        versionedFilters: java.util.Map[String, Array[ProblemFilter]]
+        versionedFilters: Map[String, Seq[ProblemFilter]]
     )(problem: Problem) = {
-      val filters = binaryFilters.map(problemFilterToMima).toSeq
-      val mimaVersionedFilters = versionedFilters.asScala.map { case (k, v) =>
-        k -> v.map(problemFilterToMima).toSeq
-      }.toMap
+      val filters = binaryFilters.map(problemFilterToMima)
+      val mimaVersionedFilters = versionedFilters.map { case (k, v) =>
+        k -> v.map(problemFilterToMima)
+      }
       MyProblemReporting.isReported(
         publishVersion,
         filters,
@@ -44,7 +42,7 @@ class MimaWorkerImpl extends MimaWorkerApi {
       )(problem)
     }
 
-    logPrintln.accept(
+    logPrintln(
       s"Scanning binary compatibility in ${current} ..."
     )
     val (problemsCount, filteredCount) =
@@ -64,7 +62,7 @@ class MimaWorkerImpl extends MimaWorkerApi {
         val forwErrors = forward.filter(isReported(forwardFilters))
         val count = backErrors.size + forwErrors.size
         val filteredCount = backward.size + forward.size - count
-        val doLog = if (count == 0) logDebug.accept(_) else logError.accept(_)
+        val doLog = if (count == 0) logDebug(_) else logError(_)
         doLog(s"Found ${count} issue when checking against ${prev.prettyDep}")
         backErrors.foreach(problem => doLog(prettyProblem("current")(problem)))
         forwErrors.foreach(problem => doLog(prettyProblem("other")(problem)))
@@ -74,10 +72,12 @@ class MimaWorkerImpl extends MimaWorkerApi {
     if (problemsCount > 0) {
       val filteredNote =
         if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-      s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
+      Some(
+        s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
+      )
     } else {
-      logPrintln.accept("Binary compatibility check passed")
-      null
+      logPrintln("Binary compatibility check passed")
+      None
     }
   }
 
@@ -90,11 +90,11 @@ class MimaWorkerImpl extends MimaWorkerApi {
   }
 
   private def sanityCheckScalaBinaryVersion(
-      scalaBinaryVersionOrNull: String
+      scalaBinaryVersion: Option[String]
   ) = {
-    scalaBinaryVersionOrNull match {
-      case "3" | "2.13" | "2.12" | "2.11" | null => // ok
-      case other =>
+    scalaBinaryVersion match {
+      case Some("3" | "2.13" | "2.12" | "2.11") | None => // ok
+      case Some(other) =>
         throw new IllegalArgumentException(
           s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $other"
         )

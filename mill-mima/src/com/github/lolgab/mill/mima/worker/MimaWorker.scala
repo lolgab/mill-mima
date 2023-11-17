@@ -19,7 +19,7 @@ class MimaWorker {
       case _ =>
         val cl = mill.api.ClassLoader.create(
           mimaWorkerClasspath.map(_.path.toIO.toURI.toURL).iterator.to(Seq),
-          parent = null,
+          parent = getClass.getClassLoader,
           sharedLoader = getClass.getClassLoader,
           sharedPrefixes = Seq("com.github.lolgab.mill.mima.worker.api.")
         )
