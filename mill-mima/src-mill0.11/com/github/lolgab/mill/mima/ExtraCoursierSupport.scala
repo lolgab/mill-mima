@@ -7,11 +7,7 @@ import mill.api.Result
 import mill.define.Task
 import mill.scalalib._
 
-import scala.util.chaining._
-
-private[mima] trait ExtraCoursierSupport
-    extends CoursierModule
-    with ScalaModule {
+private[mima] trait ExtraCoursierSupport extends CoursierModule {
 
   /** Resolves each dependency independently.
     *
@@ -27,18 +23,14 @@ private[mima] trait ExtraCoursierSupport
       deps: Task[Agg[Dep]]
   ): Task[Agg[(Dep, Agg[PathRef])]] = T.task {
     val pRepositories = repositoriesTask()
+    val bind = bindDependency()
     val pDeps = deps()
-    val scalaV = scalaVersion()
     pDeps.map { dep =>
       val Result.Success(resolved) = Lib.resolveDependencies(
         repositories = pRepositories,
-        deps = Agg(dep).map(dep =>
-          Lib
-            .depToBoundDep(dep, scalaV)
-            .tap(dependency =>
-              dependency.copy(dep = dependency.dep.withTransitive(false))
-            )
-        ),
+        deps = Agg(dep)
+          .map(bind)
+          .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
         ctx = Some(implicitly[mill.api.Ctx.Log])
       )
       (dep, resolved)

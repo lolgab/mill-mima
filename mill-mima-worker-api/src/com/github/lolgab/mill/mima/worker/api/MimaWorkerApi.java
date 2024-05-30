@@ -1,8 +1,8 @@
 package com.github.lolgab.mill.mima.worker.api;
 
 public interface MimaWorkerApi {
-  java.util.Optional<String> reportBinaryIssues(
-    String scalaBinaryVersion,
+  String reportBinaryIssues(
+    String scalaBinaryVersionOrNull,
     java.util.function.Consumer<String> logDebug,
     java.util.function.Consumer<String> logError,
     java.util.function.Consumer<String> logPrintln,
