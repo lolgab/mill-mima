@@ -113,79 +113,80 @@ private[mima] trait MimaBase
     */
   def mimaCurrentArtifact: T[PathRef] = T { jar() }
 
-  def mimaReportBinaryIssues(): Command[Unit] = T.command {
-    def prettyDep(dep: Dep): String = {
-      s"${dep.dep.module.orgName}:${dep.dep.version}"
-    }
-    val log = T.ctx().log
-    val logDebug: java.util.function.Consumer[String] = log.debug(_)
-    val logError: java.util.function.Consumer[String] = log.error(_)
-    val logPrintln: java.util.function.Consumer[String] =
-      log.outputStream.println(_)
-    val runClasspathIO =
-      runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
-    val current = mimaCurrentArtifact().path.pipe {
-      case p if os.exists(p) => p
-      case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
-    }.toIO
-
-    val previous = resolvedMimaPreviousArtifacts().iterator.map {
-      case (dep, artifact) =>
-        new worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
-    }.toArray
-
-    val checkDirection = mimaCheckDirection() match {
-      case CheckDirection.Forward  => worker.api.CheckDirection.Forward
-      case CheckDirection.Backward => worker.api.CheckDirection.Backward
-      case CheckDirection.Both     => worker.api.CheckDirection.Both
-    }
-
-    def toWorkerApi(p: ProblemFilter) =
-      new worker.api.ProblemFilter(p.name, p.problem)
-
-    val incompatibleSignatureProblemFilters =
-      if (mimaReportSignatureProblems()) Seq.empty
-      else Seq(ProblemFilter.exclude[IncompatibleSignatureProblem]("*"))
-    val binaryFilters =
-      (mimaBinaryIssueFilters() ++ incompatibleSignatureProblemFilters)
-        .map(toWorkerApi)
-        .toArray
-    val backwardFilters =
-      mimaBackwardIssueFilters().view
-        .mapValues(_.map(toWorkerApi).toArray)
-        .toMap
-        .asJava
-    val forwardFilters =
-      mimaForwardIssueFilters().view
-        .mapValues(_.map(toWorkerApi).toArray)
-        .toMap
-        .asJava
-
+  def mimaReportBinaryIssues(): Command[Unit] = {
     // only used for some sanity checks
-    val scalaBinVersion = this match {
-      case m: ScalaModule => scalaBinaryVersion(m.scalaVersion())
+    val scalaBinVersionTask = this match {
+      case m: ScalaModule => T.task { scalaBinaryVersion(m.scalaVersion()) }
       case _ =>
-        "2.13" // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
+        T.task("2.13") // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
     }
+    T.command {
+      def prettyDep(dep: Dep): String = {
+        s"${dep.dep.module.orgName}:${dep.dep.version}"
+      }
+      val log = T.ctx().log
+      val logDebug: java.util.function.Consumer[String] = log.debug(_)
+      val logError: java.util.function.Consumer[String] = log.error(_)
+      val logPrintln: java.util.function.Consumer[String] =
+        log.outputStream.println(_)
+      val runClasspathIO =
+        runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
+      val current = mimaCurrentArtifact().path.pipe {
+        case p if os.exists(p) => p
+        case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
+      }.toIO
 
-    val errorOpt: java.util.Optional[String] = mimaWorker().reportBinaryIssues(
-      scalaBinVersion,
-      logDebug,
-      logError,
-      logPrintln,
-      checkDirection,
-      runClasspathIO,
-      previous,
-      current,
-      binaryFilters,
-      backwardFilters,
-      forwardFilters,
-      mimaExcludeAnnotations().toArray,
-      publishVersion()
-    )
+      val previous = resolvedMimaPreviousArtifacts().iterator.map {
+        case (dep, artifact) =>
+          new worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
+      }.toArray
 
-    if (errorOpt.isPresent()) Result.Failure(errorOpt.get())
-    else Result.Success(())
+      val checkDirection = mimaCheckDirection() match {
+        case CheckDirection.Forward  => worker.api.CheckDirection.Forward
+        case CheckDirection.Backward => worker.api.CheckDirection.Backward
+        case CheckDirection.Both     => worker.api.CheckDirection.Both
+      }
+
+      def toWorkerApi(p: ProblemFilter) =
+        new worker.api.ProblemFilter(p.name, p.problem)
+
+      val incompatibleSignatureProblemFilters =
+        if (mimaReportSignatureProblems()) Seq.empty
+        else Seq(ProblemFilter.exclude[IncompatibleSignatureProblem]("*"))
+      val binaryFilters =
+        (mimaBinaryIssueFilters() ++ incompatibleSignatureProblemFilters)
+          .map(toWorkerApi)
+          .toArray
+      val backwardFilters =
+        mimaBackwardIssueFilters().view
+          .mapValues(_.map(toWorkerApi).toArray)
+          .toMap
+          .asJava
+      val forwardFilters =
+        mimaForwardIssueFilters().view
+          .mapValues(_.map(toWorkerApi).toArray)
+          .toMap
+          .asJava
+
+      val errorOpt: java.util.Optional[String] = mimaWorker().reportBinaryIssues(
+        scalaBinVersionTask(),
+        logDebug,
+        logError,
+        logPrintln,
+        checkDirection,
+        runClasspathIO,
+        previous,
+        current,
+        binaryFilters,
+        backwardFilters,
+        forwardFilters,
+        mimaExcludeAnnotations().toArray,
+        publishVersion()
+      )
+
+      if (errorOpt.isPresent()) Result.Failure(errorOpt.get())
+      else Result.Success(())
+    }
   }
 
 }
