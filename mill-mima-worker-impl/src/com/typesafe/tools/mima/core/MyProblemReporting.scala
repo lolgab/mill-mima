@@ -5,21 +5,9 @@ private[com] object MyProblemReporting {
       versionOpt: Option[String],
       filters: Seq[ProblemFilter],
       versionedFilters: Map[String, Seq[ProblemFilter]]
-  )(problem: Problem): Boolean = {
-    val versionMatchingFilters = versionOpt match {
-      case None => Seq.empty
-      case Some(version) =>
-        versionedFilters
-          // get all filters that apply to given module version or any version after it
-          .collect {
-            case (version2, filters)
-                if ProblemReporting.versionOrdering.gteq(version2, version) =>
-              filters
-          }.flatten
-    }
-
-    (versionMatchingFilters.iterator ++ filters).forall(filter =>
-      filter(problem)
-    )
+  )(problem: Problem): Boolean = versionOpt match {
+    case None => filters.forall(_(problem))
+    case Some(version) =>
+      ProblemReporting.isReported(version, filters, versionedFilters)(problem)
   }
 }
