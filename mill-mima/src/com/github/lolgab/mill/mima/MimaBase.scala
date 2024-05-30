@@ -117,9 +117,7 @@ private[mima] trait MimaBase
     // only used for some sanity checks
     val scalaBinVersionTask = this match {
       case m: ScalaModule => T.task { scalaBinaryVersion(m.scalaVersion()) }
-      case _              =>
-        // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
-        T.task("2.13")
+      case _              => T.task("3")
     }
     T.command {
       def prettyDep(dep: Dep): String = {
