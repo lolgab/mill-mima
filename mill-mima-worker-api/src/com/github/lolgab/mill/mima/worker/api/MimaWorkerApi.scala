@@ -16,7 +16,7 @@ trait MimaWorkerApi {
       backwardFilters: Map[String, Seq[ProblemFilter]],
       forwardFilters: Map[String, Seq[ProblemFilter]],
       excludeAnnos: Seq[String],
-      publishVersion: String
+      publishVersion: Option[String]
   ): Option[String]
 }
 
