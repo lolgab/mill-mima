@@ -13,9 +13,19 @@ import scala.util.chaining._
 
 private[mima] trait MimaBase
     extends JavaModule
-    with PublishModule
     with ExtraCoursierSupport
     with VersionSpecific {
+
+  private def publishDataTask: Task[Option[(String, String, String)]] =
+    this match {
+      case m: PublishModule =>
+        T.task {
+          Some(
+            (m.pomSettings().organization, m.artifactId(), m.publishVersion())
+          )
+        }
+      case _ => T.task { None }
+    }
 
   /** Set of versions to check binary compatibility against. */
   def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
@@ -24,6 +34,7 @@ private[mima] trait MimaBase
     * derived from [[mimaPreviousVersions]].
     */
   def mimaPreviousArtifacts: Target[Agg[Dep]] = T {
+    val publishData = publishDataTask()
     val versions = mimaPreviousVersions().distinct
     if (versions.isEmpty)
       Result.Failure(
@@ -31,13 +42,19 @@ private[mima] trait MimaBase
         Some(Agg.empty[Dep])
       )
     else
-      Result.Success(
-        Agg.from(
-          versions.map(version =>
-            ivy"${pomSettings().organization}:${artifactId()}:${version}"
+      publishData match {
+        case Some((organization, artifactId, _)) =>
+          Result.Success(
+            Agg.from(
+              versions.map(version => ivy"$organization:$artifactId:$version")
+            )
           )
-        )
-      )
+        case None =>
+          Result.Failure(
+            "The module is not a PublishModule so it requires setting mimaPreviousArtifacts manually. Please override mimaPreviousArtifacts or extend PublishModule.",
+            Some(Agg.empty[Dep])
+          )
+      }
   }
 
   private def mimaCheckDirectionInput = T.input {
@@ -125,13 +142,13 @@ private[mima] trait MimaBase
       val log = T.ctx().log
 
       val runClasspathIO =
-        runClasspath().view.map(_.path).filter(os.exists).map(_.toIO).toArray
+        runClasspath().iterator.map(_.path).filter(os.exists).map(_.toIO).toSeq
       val current = mimaCurrentArtifact().path.pipe {
         case p if os.exists(p) => p
         case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
       }.toIO
 
-      val previous = resolvedMimaPreviousArtifacts().map {
+      val previous = resolvedMimaPreviousArtifacts().iterator.map {
         case (dep, artifact) =>
           worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
       }.toSeq
@@ -155,6 +172,7 @@ private[mima] trait MimaBase
         mimaBackwardIssueFilters().view.mapValues(_.map(toWorkerApi)).toMap
       val forwardFilters =
         mimaForwardIssueFilters().view.mapValues(_.map(toWorkerApi)).toMap
+      val publishVersion = publishDataTask().map(_._3)
 
       mimaWorker().reportBinaryIssues(
         scalaBinVersionTask(),
@@ -169,7 +187,7 @@ private[mima] trait MimaBase
         backwardFilters,
         forwardFilters,
         mimaExcludeAnnotations(),
-        publishVersion()
+        publishVersion
       ) match {
         case Some(error) => Result.Failure(error)
         case None        => Result.Success(())

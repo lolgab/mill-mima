@@ -131,6 +131,10 @@ trait itestCross extends MillIntegrationTestModule with Cross.Module[String] {
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
         ),
+        PathRef(testBase / "not-publish-module") -> Seq(
+          TestInvocation.Targets(Seq("prepare")),
+          TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
+        ),
 
       )
     }
