@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters._
 class MimaWorkerImpl extends MimaWorkerApi {
 
   def reportBinaryIssues(
-      scalaBinaryVersion: String,
+      scalaBinaryVersionOrNull: String,
       logDebug: java.util.function.Consumer[String],
       logError: java.util.function.Consumer[String],
       logPrintln: java.util.function.Consumer[String],
@@ -25,8 +25,8 @@ class MimaWorkerImpl extends MimaWorkerApi {
       forwardFilters: java.util.Map[String, Array[ProblemFilter]],
       excludeAnnos: Array[String],
       publishVersion: String
-  ): java.util.Optional[String] = {
-    sanityCheckScalaBinaryVersion(scalaBinaryVersion)
+  ): String = {
+    sanityCheckScalaBinaryVersion(scalaBinaryVersionOrNull)
 
     val mimaLib = new MiMaLib(runClasspath.toSeq)
 
@@ -74,12 +74,10 @@ class MimaWorkerImpl extends MimaWorkerApi {
     if (problemsCount > 0) {
       val filteredNote =
         if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-      java.util.Optional.of(
-        s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
-      )
+      s"Failed binary compatibility check! Found $problemsCount potential problems$filteredNote"
     } else {
       logPrintln.accept("Binary compatibility check passed")
-      java.util.Optional.empty()
+      null
     }
   }
 
@@ -91,12 +89,14 @@ class MimaWorkerImpl extends MimaWorkerApi {
     s" * $desc$howToFilter"
   }
 
-  private def sanityCheckScalaBinaryVersion(scalaBinaryVersion: String) = {
-    scalaBinaryVersion match {
-      case "2.11" | "2.12" | "2.13" | "3" => // ok
-      case _ =>
+  private def sanityCheckScalaBinaryVersion(
+      scalaBinaryVersionOrNull: String
+  ) = {
+    scalaBinaryVersionOrNull match {
+      case "3" | "2.13" | "2.12" | "2.11" | null => // ok
+      case other =>
         throw new IllegalArgumentException(
-          s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $scalaBinaryVersion"
+          s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $other"
         )
     }
   }
