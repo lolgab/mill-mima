@@ -12,7 +12,7 @@ trait Common extends JavaModule with PublishModule {
 }
 object prev extends Common
 object curr extends Common with Mima {
-  override def mimaPreviousVersions = T(Seq("0.0.1"))
+  override def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
   override def mimaCheckDirection = CheckDirection.Backward
 }
 
