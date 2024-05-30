@@ -115,8 +115,9 @@ private[mima] trait MimaBase
 
   def mimaReportBinaryIssues(): Command[Unit] = {
     val scalaBinVersionOrNullTask: Task[Option[String]] = this match {
-      case m: ScalaModule => T.task { Some(scalaBinaryVersion(m.scalaVersion())) }
-      case _              => T.task { None }
+      case m: ScalaModule =>
+        T.task { Some(scalaBinaryVersion(m.scalaVersion())) }
+      case _ => T.task { None }
     }
     T.command {
       def prettyDep(dep: Dep): String = {
