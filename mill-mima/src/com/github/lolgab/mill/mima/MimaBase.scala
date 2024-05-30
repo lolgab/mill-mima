@@ -114,9 +114,9 @@ private[mima] trait MimaBase
   def mimaCurrentArtifact: T[PathRef] = T { jar() }
 
   def mimaReportBinaryIssues(): Command[Unit] = {
-    val scalaBinVersionOrNullTask = this match {
-      case m: ScalaModule => T.task { scalaBinaryVersion(m.scalaVersion()) }
-      case _              => T.task { null }
+    val scalaBinVersionOrNullTask: Task[Option[String]] = this match {
+      case m: ScalaModule => T.task { Some(scalaBinaryVersion(m.scalaVersion())) }
+      case _              => T.task { None }
     }
     T.command {
       def prettyDep(dep: Dep): String = {
@@ -168,7 +168,7 @@ private[mima] trait MimaBase
 
       val errorOrNull: String =
         mimaWorker().reportBinaryIssues(
-          scalaBinVersionOrNullTask(),
+          scalaBinVersionOrNullTask().getOrElse(null),
           logDebug,
           logError,
           logPrintln,
