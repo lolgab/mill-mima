@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.chaining._
 
 private[mima] trait MimaBase
-    extends ScalaModule
+    extends JavaModule
     with PublishModule
     with ExtraCoursierSupport
     with VersionSpecific {
@@ -161,8 +161,15 @@ private[mima] trait MimaBase
         .toMap
         .asJava
 
+    // only used for some sanity checks
+    val scalaBinVersion = this match {
+      case m: ScalaModule => scalaBinaryVersion(m.scalaVersion())
+      case _ =>
+        "2.13" // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
+    }
+
     val errorOpt: java.util.Optional[String] = mimaWorker().reportBinaryIssues(
-      scalaBinaryVersion(scalaVersion()),
+      scalaBinVersion,
       logDebug,
       logError,
       logPrintln,
