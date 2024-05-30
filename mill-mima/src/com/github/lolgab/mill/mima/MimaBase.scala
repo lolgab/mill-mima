@@ -117,8 +117,9 @@ private[mima] trait MimaBase
     // only used for some sanity checks
     val scalaBinVersionTask = this match {
       case m: ScalaModule => T.task { scalaBinaryVersion(m.scalaVersion()) }
-      case _ =>
-        T.task("2.13") // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
+      case _              =>
+        // FIXME: ask Mill, but `mill.main.BuildInfo` isn't available in older versions
+        T.task("2.13")
     }
     T.command {
       def prettyDep(dep: Dep): String = {
@@ -168,21 +169,22 @@ private[mima] trait MimaBase
           .toMap
           .asJava
 
-      val errorOpt: java.util.Optional[String] = mimaWorker().reportBinaryIssues(
-        scalaBinVersionTask(),
-        logDebug,
-        logError,
-        logPrintln,
-        checkDirection,
-        runClasspathIO,
-        previous,
-        current,
-        binaryFilters,
-        backwardFilters,
-        forwardFilters,
-        mimaExcludeAnnotations().toArray,
-        publishVersion()
-      )
+      val errorOpt: java.util.Optional[String] =
+        mimaWorker().reportBinaryIssues(
+          scalaBinVersionTask(),
+          logDebug,
+          logError,
+          logPrintln,
+          checkDirection,
+          runClasspathIO,
+          previous,
+          current,
+          binaryFilters,
+          backwardFilters,
+          forwardFilters,
+          mimaExcludeAnnotations().toArray,
+          publishVersion()
+        )
 
       if (errorOpt.isPresent()) Result.Failure(errorOpt.get())
       else Result.Success(())
