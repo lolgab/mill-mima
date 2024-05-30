@@ -169,7 +169,7 @@ private[mima] trait MimaBase
 
       val errorOrNull: String =
         mimaWorker().reportBinaryIssues(
-          scalaBinVersionOrNullTask().getOrElse(null),
+          scalaBinVersionOrNullTask().orNull,
           logDebug,
           logError,
           logPrintln,
