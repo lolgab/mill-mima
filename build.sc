@@ -12,7 +12,7 @@ import $ivy.`com.goyeau::mill-scalafix::0.4.0`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.1.0`
+import $ivy.`com.github.lolgab::mill-mima::0.1.1`
 import com.github.lolgab.mill.mima._
 import os.Path
 import scala.util.Try
@@ -134,8 +134,7 @@ trait itestCross extends MillIntegrationTestModule with Cross.Module[String] {
         PathRef(testBase / "not-publish-module") -> Seq(
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
-        ),
-
+        )
       )
     }
 }
