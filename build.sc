@@ -53,7 +53,7 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
     )
   )
   def publishVersion = VcsVersion.vcsState().format()
-  def scalaVersion = "2.13.12"
+  def scalaVersion = "2.13.14"
 
   def scalacOptions =
     super.scalacOptions() ++ Seq("-Ywarn-unused", "-deprecation")
@@ -134,8 +134,7 @@ trait itestCross extends MillIntegrationTestModule with Cross.Module[String] {
         PathRef(testBase / "not-publish-module") -> Seq(
           TestInvocation.Targets(Seq("prepare")),
           TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
-        ),
-
+        )
       )
     }
 }
