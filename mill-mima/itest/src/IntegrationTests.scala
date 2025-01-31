@@ -78,5 +78,18 @@ object IntegrationTests extends TestSuite {
       val res2 = tester.eval("verify")
       assert(!res2.isSuccess)
     }
+    test("mima-version") {
+      val tester = new IntegrationTester(
+        clientServerMode = true,
+        workspaceSourcePath = resourceFolder / "mima-version",
+        millExecutable = millExecutable
+      )
+
+      val res1 = tester.eval("prepare")
+      assert(res1.isSuccess)
+      
+      val res2 = tester.eval("verify")
+      assert(!res2.isSuccess)
+    }
   }
 }

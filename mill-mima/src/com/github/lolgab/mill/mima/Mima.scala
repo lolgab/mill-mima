@@ -123,13 +123,21 @@ trait Mima extends JavaModule with OfflineSupportModule {
     false
   }
 
+  /** Underlying com.typesafe::mima-core version used. Find the latest version
+    * here: https://github.com/lightbend-labs/mima/releases
+    */
+  def mimaVersion: Target[String] = T {
+    MimaBuildInfo.mimaDefaultVersion
+  }
+
   private def mimaWorker: Task[worker.api.MimaWorkerApi] = T.task {
     val mimaWorkerClasspath = Task.Anon {
       Lib.resolveDependencies(
         repositoriesTask(),
         Agg(
           ivy"com.github.lolgab:mill-mima-worker-impl_2.13:${MimaBuildInfo.publishVersion}"
-            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13")
+            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13"),
+          ivy"com.typesafe::mima-core:${mimaVersion()}"
         ).map(Lib.depToBoundDep(_, mill.main.BuildInfo.scalaVersion)),
         ctx = Some(T.log)
       )
