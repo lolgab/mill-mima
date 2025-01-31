@@ -31,11 +31,6 @@ object curr extends Common with Mima {
   object js extends Js
 }
 
-def prepare() = T.command {
-  prev.publishLocal(sys.props("ivy.home") + "/local")()
-  prev.js.publishLocal(sys.props("ivy.home") + "/local")()
-}
-
 def verify() = T.command {
   // tests mimaPreviousVersions
   assertEquals(curr.mimaPreviousArtifacts(), Agg(ivy"org:prev_2.13:0.0.1"))

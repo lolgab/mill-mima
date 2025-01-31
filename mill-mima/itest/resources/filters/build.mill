@@ -20,11 +20,3 @@ object curr extends Common with Mima {
     Seq(ProblemFilter.exclude[Problem]("foo.Foo.*"))
   }
 }
-
-def prepare() = T.command {
-  prev.publishLocal(sys.props("ivy.home") + "/local")()
-}
-
-def verify() = T.command {
-  curr.mimaReportBinaryIssues()
-}

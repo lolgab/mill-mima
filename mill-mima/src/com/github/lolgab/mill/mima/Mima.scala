@@ -71,21 +71,27 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
   }
 
-  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
-    val pRepositories = repositoriesTask()
-    val bind = bindDependency()
-    val pDeps = mimaPreviousArtifacts()
-    pDeps.map { dep =>
-      val Result.Success(resolved) = Lib.resolveDependencies(
-        repositories = pRepositories,
-        deps = Agg(dep)
-          .map(bind)
-          .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
-        ctx = Some(implicitly[mill.api.Ctx.Log])
-      )
-      dep -> resolved.iterator.next()
+  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] =
+    Task {
+      val deps = mimaPreviousArtifacts()
+      val builder = Agg.newBuilder[(Dep, PathRef)]
+      var failure = null.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+      deps.foreach { dep =>
+        Lib.resolveDependencies(
+          repositories = repositoriesTask(),
+          deps = Agg(dep)
+            .map(bindDependency())
+            .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
+          ctx = Some(implicitly[mill.api.Ctx.Log])
+        ) match {
+          case Result.Success(resolved) =>
+            builder += (dep -> resolved.iterator.next())
+          case other => failure = other.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+        }
+      }
+      if (failure == null) Result.Success(builder.result())
+      else failure
     }
-  }
 
   /** Filters to apply to binary issues found. Applies both to backward and
     * forward binary compatibility checking.

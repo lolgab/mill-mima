@@ -105,7 +105,6 @@ trait MillMimaCross
       def resources = Task {
         val p = Task.dest / "mill/local-test-overrides" / s"com.github.lolgab-${millMima.artifactId()}"
         os.write(p, millMima.runClasspath().map(_.path).mkString("\n"), createFolders = true)
-        println(Task.dest)
         Seq(PathRef(Task.dest))
       }
     }
