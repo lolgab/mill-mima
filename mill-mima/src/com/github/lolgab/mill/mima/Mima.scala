@@ -1,20 +1,17 @@
 package com.github.lolgab.mill.mima
 
-import com.github.lolgab.mill.mima.internal.Utils.scalaBinaryVersion
-import com.github.lolgab.mill.mima.worker.MimaWorkerExternalModule
+import com.github.lolgab.mill.mima.worker._
 import mill._
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
 import mill.define.Task
 import mill.scalalib._
+import mill.scalalib.api.ZincWorkerUtil.scalaBinaryVersion
 
 import scala.util.chaining._
 
-private[mima] trait MimaBase
-    extends JavaModule
-    with ExtraCoursierSupport
-    with VersionSpecific {
+trait Mima extends JavaModule with OfflineSupportModule {
 
   private def publishDataTask: Task[Option[(String, String, String)]] =
     this match {
@@ -75,9 +72,19 @@ private[mima] trait MimaBase
   }
 
   private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] = T {
-    resolveSeparateNonTransitiveDeps(mimaPreviousArtifacts)().map(p =>
-      p._1 -> p._2.iterator.next()
-    )
+    val pRepositories = repositoriesTask()
+    val bind = bindDependency()
+    val pDeps = mimaPreviousArtifacts()
+    pDeps.map { dep =>
+      val Result.Success(resolved) = Lib.resolveDependencies(
+        repositories = pRepositories,
+        deps = Agg(dep)
+          .map(bind)
+          .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
+        ctx = Some(implicitly[mill.api.Ctx.Log])
+      )
+      dep -> resolved.iterator.next()
+    }
   }
 
   /** Filters to apply to binary issues found. Applies both to backward and
@@ -117,8 +124,18 @@ private[mima] trait MimaBase
   }
 
   private def mimaWorker: Task[worker.api.MimaWorkerApi] = T.task {
-    val cp = mimaWorkerClasspath()
-    MimaWorkerExternalModule.mimaWorker().impl(cp)
+    val mimaWorkerClasspath = Task.Anon {
+      Lib.resolveDependencies(
+        repositoriesTask(),
+        Agg(
+          ivy"com.github.lolgab:mill-mima-worker-impl_2.13:${MimaBuildInfo.publishVersion}"
+            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13")
+        ).map(Lib.depToBoundDep(_, mill.main.BuildInfo.scalaVersion)),
+        ctx = Some(T.log)
+      )
+    }()
+
+    MimaWorkerExternalModule.mimaWorker().impl(mimaWorkerClasspath)
   }
 
   /** The `PathRef` to the actual artifact that is being checked for binary
@@ -192,6 +209,18 @@ private[mima] trait MimaBase
         case Some(error) => Result.Failure(error)
         case None        => Result.Success(())
       }
+    }
+  }
+
+  override def prepareOffline(all: mainargs.Flag): Command[Unit] = {
+    val task = if (all.value) {
+      resolvedMimaPreviousArtifacts.map(_ => ())
+    } else {
+      T.task { () }
+    }
+    T.command {
+      super.prepareOffline(all)()
+      task()
     }
   }
 

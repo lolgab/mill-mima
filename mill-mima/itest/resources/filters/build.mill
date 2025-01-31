@@ -1,4 +1,6 @@
-import $file.plugins
+package build
+
+import $ivy.`com.github.lolgab::mill-mima::TEST`
 
 import mill._
 import mill.scalalib._

@@ -1,4 +1,4 @@
-import $file.utils
+package build
 
 import mill._
 import mill.scalalib._
@@ -6,36 +6,43 @@ import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 import mill.scalalib.publish._
 import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
 import mill.contrib.buildinfo.BuildInfo
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
-import de.tobiasroeser.mill.integrationtest._
 import $ivy.`com.goyeau::mill-scalafix::0.4.0`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 import $ivy.`com.github.lolgab::mill-mima::0.1.1`
 import com.github.lolgab.mill.mima._
-import os.Path
 import scala.util.Try
+
+import scala.concurrent.duration._
 
 val latestMillDevVersion: Option[String] = {
   sys.env
     .get("GITHUB_EVENT_NAME")
     .filter(_ == "workflow_dispatch")
-    .map(_ => utils.findLatestDevVersion())
+    .map{_ =>
+      import coursier._
+      val versions =
+        Versions(cache.FileCache().withTtl(1.minute))
+          .withModule(mod"com.lihaoyi:mill-main_2.13")
+          .run()
+      versions.latest
+    }
 }
 
 val millVersions = latestMillDevVersion match {
-  case None          => Seq("0.9.12", "0.10.0", "0.11.0")
+  case None          => Seq("0.12.0")
   case Some(version) => Seq(version)
 }
 val itestMillVersions = latestMillDevVersion match {
-  case None          => Seq("0.9.12", "0.10.0", "0.10.12", "0.11.0")
+  case None          => Seq("0.12.0")
   case Some(version) => Seq(version)
 }
 val millBinaryVersions = millVersions.map(millBinaryVersion)
 
 def millBinaryVersion(millVersion: String) = {
   if (latestMillDevVersion.contains(millVersion)) millVersion
+  else if (millVersion.startsWith("0.12.")) "0.11"
   else scalaNativeBinaryVersion(millVersion)
 }
 def millVersion(binaryVersion: String) =
@@ -66,14 +73,14 @@ trait MillMimaCross
     extends Common
     with BuildInfo
     with Mima
-    with Cross.Module[String] {
+    with Cross.Module[String] { millMima =>
   val millBinaryVersion = crossValue
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def artifactName = s"mill-mima_mill$millBinaryVersion"
   def mimaPreviousVersions = Seq("0.0.17")
   override def sources = T.sources(
     super.sources() ++ Seq(
-      millSourcePath / s"src-mill${millVersion(millBinaryVersion).split('.').take(2).mkString(".")}"
+      millSourcePath / s"src-mill${millBinaryVersion.split('.').take(2).mkString(".")}"
     )
       .map(PathRef(_))
   )
@@ -85,6 +92,23 @@ trait MillMimaCross
   )
   override def buildInfoObjectName = "MimaBuildInfo"
   override def buildInfoPackageName = "com.github.lolgab.mill.mima.worker"
+
+  object itest extends ScalaTests with TestModule.Utest {
+    def ivyDeps = Agg(ivy"com.lihaoyi::mill-testkit:${millVersion(millBinaryVersion)}")
+    def forkEnv = Map("MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString)
+
+    // Create a Mill executable configured for testing our plugin
+    object millExecutable extends JavaModule {
+      def ivyDeps = Agg(ivy"com.lihaoyi:mill-dist:${millVersion(millBinaryVersion)}")
+      def mainClass = Some("mill.runner.client.MillClientMain")
+      def resources = Task {
+        val p = Task.dest / "mill/local-test-overrides" / s"com.github.lolgab-${millMima.artifactId()}"
+        os.write(p, millMima.runClasspath().map(_.path).mkString("\n"), createFolders = true)
+        println(Task.dest)
+        Seq(PathRef(Task.dest))
+      }
+    }
+  }
 }
 
 object `mill-mima-worker-api` extends Common
@@ -93,48 +117,4 @@ object `mill-mima-worker-impl` extends Common {
   override def ivyDeps = super.ivyDeps() ++ Agg(
     ivy"com.typesafe::mima-core:1.1.3"
   )
-}
-
-object itest extends Cross[itestCross](itestMillVersions)
-trait itestCross extends MillIntegrationTestModule with Cross.Module[String] {
-  val millVersion = crossValue
-  def millTestVersion = millVersion
-  def pluginsUnderTest = Seq(`mill-mima`(millBinaryVersion(millVersion)))
-  def temporaryIvyModules = Seq(
-    `mill-mima-worker-impl`,
-    `mill-mima-worker-api`
-  )
-  def testBase = millSourcePath / "src"
-  override def testInvocations: T[Seq[(PathRef, Seq[TestInvocation.Targets])]] =
-    T {
-      Seq(
-        PathRef(testBase / "simple") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
-        ),
-        PathRef(testBase / "filters") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify"))
-        ),
-        PathRef(testBase / "previous-versions") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify")),
-          TestInvocation.Targets(Seq("verifyFail"), expectedExitCode = 1),
-          TestInvocation.Targets(Seq("verifyFailJs"), expectedExitCode = 1)
-        ),
-        PathRef(testBase / "multi-previous-versions") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify")),
-          TestInvocation.Targets(Seq("verifyFail"), expectedExitCode = 1)
-        ),
-        PathRef(testBase / "java") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
-        ),
-        PathRef(testBase / "not-publish-module") -> Seq(
-          TestInvocation.Targets(Seq("prepare")),
-          TestInvocation.Targets(Seq("verify"), expectedExitCode = 1)
-        )
-      )
-    }
 }

@@ -1,8 +1,11 @@
+package build
+
+import $ivy.`com.github.lolgab::mill-mima::TEST`
+
 import mill._
 
 import mill.scalalib._
 import mill.scalalib.publish._
-import $file.plugins
 import com.github.lolgab.mill.mima._
 import coursier.ivy.IvyRepository
 import mill.define.Target
