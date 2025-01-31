@@ -86,7 +86,8 @@ trait Mima extends JavaModule with OfflineSupportModule {
         ) match {
           case Result.Success(resolved) =>
             builder += (dep -> resolved.iterator.next())
-          case other => failure = other.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+          case other =>
+            failure = other.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
         }
       }
       if (failure == null) Result.Success(builder.result())
