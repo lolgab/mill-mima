@@ -8,7 +8,7 @@ import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
 import mill.contrib.buildinfo.BuildInfo
 import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
 import de.tobiasroeser.mill.integrationtest._
-import $ivy.`com.goyeau::mill-scalafix::0.4.0`
+import $ivy.`com.goyeau::mill-scalafix::0.4.2`
 import com.goyeau.mill.scalafix.ScalafixModule
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
