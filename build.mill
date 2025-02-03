@@ -1,0 +1,120 @@
+package build
+
+import mill._
+import mill.scalalib._
+import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
+import mill.scalalib.publish._
+import $ivy.`com.lihaoyi::mill-contrib-buildinfo:`
+import mill.contrib.buildinfo.BuildInfo
+import $ivy.`com.goyeau::mill-scalafix::0.5.0`
+import com.goyeau.mill.scalafix.ScalafixModule
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.1`
+import de.tobiasroeser.mill.vcs.version.VcsVersion
+import $ivy.`com.github.lolgab::mill-mima::0.1.1`
+import com.github.lolgab.mill.mima._
+
+import scala.concurrent.duration._
+
+val latestMillDevVersion: Option[String] = {
+  sys.env
+    .get("GITHUB_EVENT_NAME")
+    .filter(_ == "workflow_dispatch")
+    .map{_ =>
+      import coursier._
+      val versions =
+        Versions(cache.FileCache().withTtl(1.minute))
+          .withModule(mod"com.lihaoyi:mill-main_2.13")
+          .run()
+      versions.latest
+    }
+}
+
+val mimaDefaultVersion = "1.1.4"
+val millVersions = latestMillDevVersion match {
+  case None          => Seq("0.12.0")
+  case Some(version) => Seq(version)
+}
+val itestMillVersions = latestMillDevVersion match {
+  case None          => Seq("0.12.0")
+  case Some(version) => Seq(version)
+}
+val millBinaryVersions = millVersions.map(millBinaryVersion)
+
+def millBinaryVersion(millVersion: String) = {
+  if (latestMillDevVersion.contains(millVersion)) millVersion
+  else if (millVersion.startsWith("0.12.")) "0.11"
+  else scalaNativeBinaryVersion(millVersion)
+}
+def millVersion(binaryVersion: String) =
+  millVersions.find(v => millBinaryVersion(v) == binaryVersion).get
+
+trait Common extends ScalaModule with PublishModule with ScalafixModule {
+  def pomSettings = PomSettings(
+    description = "MiMa Mill Plugin",
+    organization = "com.github.lolgab",
+    url = "https://github.com/lolgab/mill-mima",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github("lolgab", "mill-mima"),
+    developers = Seq(
+      Developer("lolgab", "Lorenzo Gabriele", "https://github.com/lolgab")
+    )
+  )
+  def publishVersion = VcsVersion.vcsState().format()
+  def scalaVersion = mill.main.BuildInfo.scalaVersion
+
+  def scalacOptions =
+    super.scalacOptions() ++ Seq("-Ywarn-unused", "-deprecation")
+
+  def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.6.0")
+}
+
+object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions)
+trait MillMimaCross
+    extends Common
+    with BuildInfo
+    with Mima
+    with Cross.Module[String] { millMima =>
+  val millBinaryVersion = crossValue
+  override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
+  override def artifactName = s"mill-mima_mill$millBinaryVersion"
+  def mimaPreviousVersions = Seq("0.0.17")
+  override def sources = T.sources(
+    super.sources() ++ Seq(
+      millSourcePath / s"src-mill${millBinaryVersion.split('.').take(2).mkString(".")}"
+    )
+      .map(PathRef(_))
+  )
+  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+    ivy"com.lihaoyi::mill-scalalib:${millVersion(millBinaryVersion)}"
+  )
+  override def buildInfoMembers = Seq(
+    BuildInfo.Value("publishVersion", publishVersion()),
+    BuildInfo.Value("mimaDefaultVersion", mimaDefaultVersion),
+  )
+  override def buildInfoObjectName = "MimaBuildInfo"
+  override def buildInfoPackageName = "com.github.lolgab.mill.mima.worker"
+
+  object itest extends ScalaTests with TestModule.Utest {
+    def ivyDeps = Agg(ivy"com.lihaoyi::mill-testkit:${millVersion(millBinaryVersion)}")
+    def forkEnv = Map("MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString)
+
+    // Create a Mill executable configured for testing our plugin
+    object millExecutable extends JavaModule {
+      def ivyDeps = Agg(ivy"com.lihaoyi:mill-dist:${millVersion(millBinaryVersion)}")
+      def mainClass = Some("mill.runner.client.MillClientMain")
+      def resources = Task {
+        val p = Task.dest / "mill/local-test-overrides" / s"com.github.lolgab-${millMima.artifactId()}"
+        os.write(p, millMima.runClasspath().map(_.path).mkString("\n"), createFolders = true)
+        Seq(PathRef(Task.dest))
+      }
+    }
+  }
+}
+
+object `mill-mima-worker-api` extends Common
+object `mill-mima-worker-impl` extends Common {
+  override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
+  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+    ivy"com.typesafe::mima-core:$mimaDefaultVersion"
+  )
+}
