@@ -154,6 +154,15 @@ def mimaReportSignatureProblems = true
 
 ## Changelog
 
+### 0.1.1
+
+- Support MiMa on `JavaModule`
+- Make `Mima` work on modules that are not `PublishModule`s
+
+### 0.1.0
+
+Add `mimaCurrentArtifact` configuration
+
 ### 0.0.24
 
 - Update MiMa to `1.1.3`
