@@ -19,7 +19,7 @@ val latestMillDevVersion: Option[String] = {
   sys.env
     .get("GITHUB_EVENT_NAME")
     .filter(_ == "workflow_dispatch")
-    .map{_ =>
+    .map { _ =>
       import coursier._
       val versions =
         Versions(cache.FileCache().withTtl(1.minute))
@@ -89,22 +89,33 @@ trait MillMimaCross
   )
   override def buildInfoMembers = Seq(
     BuildInfo.Value("publishVersion", publishVersion()),
-    BuildInfo.Value("mimaDefaultVersion", mimaDefaultVersion),
+    BuildInfo.Value("mimaDefaultVersion", mimaDefaultVersion)
   )
   override def buildInfoObjectName = "MimaBuildInfo"
   override def buildInfoPackageName = "com.github.lolgab.mill.mima.worker"
 
   object itest extends ScalaTests with TestModule.Utest {
-    def ivyDeps = Agg(ivy"com.lihaoyi::mill-testkit:${millVersion(millBinaryVersion)}")
-    def forkEnv = Map("MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString)
+    def ivyDeps = Agg(
+      ivy"com.lihaoyi::mill-testkit:${millVersion(millBinaryVersion)}"
+    )
+    def forkEnv = Map(
+      "MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString
+    )
 
     // Create a Mill executable configured for testing our plugin
     object millExecutable extends JavaModule {
-      def ivyDeps = Agg(ivy"com.lihaoyi:mill-dist:${millVersion(millBinaryVersion)}")
+      def ivyDeps = Agg(
+        ivy"com.lihaoyi:mill-dist:${millVersion(millBinaryVersion)}"
+      )
       def mainClass = Some("mill.runner.client.MillClientMain")
       def resources = Task {
-        val p = Task.dest / "mill/local-test-overrides" / s"com.github.lolgab-${millMima.artifactId()}"
-        os.write(p, millMima.runClasspath().map(_.path).mkString("\n"), createFolders = true)
+        val p =
+          Task.dest / "mill/local-test-overrides" / s"com.github.lolgab-${millMima.artifactId()}"
+        os.write(
+          p,
+          millMima.runClasspath().map(_.path).mkString("\n"),
+          createFolders = true
+        )
         Seq(PathRef(Task.dest))
       }
     }
