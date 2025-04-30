@@ -32,11 +32,11 @@ val latestMillDevVersion: Option[String] = {
 val scala213 = mill.main.BuildInfo.scalaVersion
 val scala3 = "3.6.4"
 
-val scalaVersions = Seq(scala213)//, scala3)
+val scalaVersions = Seq(scala213) //, scala3)
 
 val mimaDefaultVersion = "1.1.4"
 val millVersions = latestMillDevVersion match {
-  case None          => Seq("0.12.0")//, "0.13.0-M1")
+  case None          => Seq("0.12.0") // , "0.13.0-M1")
   case Some(version) => Seq(version)
 }
 val itestMillVersions = latestMillDevVersion match {
