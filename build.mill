@@ -61,8 +61,12 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
       Developer("lolgab", "Lorenzo Gabriele", "https://github.com/lolgab")
     )
   )
-  def forcedMimaVersion = Task.Input { Task.env.get("MILL_MIMA_FORCED_VERSION") }
-  def publishVersion = Task { forcedMimaVersion().getOrElse(VcsVersion.vcsState().format()) }
+  def forcedMimaVersion = Task.Input {
+    Task.env.get("MILL_MIMA_FORCED_VERSION")
+  }
+  def publishVersion = Task {
+    forcedMimaVersion().getOrElse(VcsVersion.vcsState().format())
+  }
 
   def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:all", "-deprecation")
@@ -78,13 +82,12 @@ trait MillMimaCross
   val millBinaryVersion = crossValue
   override def moduleDeps =
     super.moduleDeps ++ Seq(`mill-mima-worker-api`)
-  override def artifactName = s"mill-mima_mill1" // 1 should be $millBinaryVersion
+  override def artifactName = s"mill-mima_mill$millBinaryVersion"
   def mimaPreviousVersions = Seq.empty[String]
   override def sources = T.sources(
     super.sources() ++ Seq(
-      moduleDir / s"src-mill${millBinaryVersion.split('.').take(2).mkString(".")}"
-    )
-      .map(PathRef(_))
+      moduleDir / s"src-mill${millBinaryVersion.split('.').head}"
+    ).map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Seq(
     ivy"com.lihaoyi::mill-libs:${millVersion(millBinaryVersion)}"
@@ -116,7 +119,9 @@ trait MillMimaCross
 
     // Create a Mill executable configured for testing our plugin
     object millExecutable extends JavaModule {
-      def ivyDeps = Agg(ivy"com.lihaoyi:mill-runner-launcher_3:${millVersion(millBinaryVersion)}")
+      def ivyDeps = Agg(
+        ivy"com.lihaoyi:mill-runner-launcher_3:${millVersion(millBinaryVersion)}"
+      )
       def mainClass = Some("mill.launcher.MillLauncherMain")
     }
   }
