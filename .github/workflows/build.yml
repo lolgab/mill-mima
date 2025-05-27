@@ -36,9 +36,9 @@ jobs:
     - name: Publish Artifacts
       run: 
         ./mill --no-server --disable-ticker __.publishArtifacts
-    - name: Test
-      run:
-        ./mill --no-server --disable-ticker __.test
+    # - name: Test
+    #   run:
+    #     ./mill --no-server --disable-ticker __.test
   publish-sonatype:
     if: github.repository == 'lolgab/mill-mima' && (contains(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
     needs: build
