@@ -27,7 +27,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
   /** Set of artifacts to check binary compatibility against. By default this is
     * derived from [[mimaPreviousVersions]].
     */
-  def mimaPreviousArtifacts: Target[Agg[Dep]] = Task {
+  def mimaPreviousArtifacts: Target[Seq[Dep]] = Task {
     val publishData = publishDataTask()
     val versions = mimaPreviousVersions().distinct
     if (versions.isEmpty)
@@ -64,11 +64,11 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
   }
 
-  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] =
+  private[mima] def resolvedMimaPreviousArtifacts: T[Seq[(Dep, PathRef)]] =
     Task {
       val deps = mimaPreviousArtifacts()
       val builder = Agg.newBuilder[(Dep, PathRef)]
-      var failure = null.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+      var failure = null.asInstanceOf[Result[Seq[(Dep, PathRef)]]]
       deps.foreach { dep =>
         Lib.resolveDependencies(
           repositories = repositoriesTask(),
@@ -81,7 +81,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
           case Result.Success(resolved) =>
             builder += (dep -> resolved.iterator.next())
           case other =>
-            failure = other.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+            failure = other.asInstanceOf[Result[Seq[(Dep, PathRef)]]]
         }
       }
       if (failure == null) Result.Success(builder.result())

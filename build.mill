@@ -80,7 +80,7 @@ trait MillMimaCross
   val millBinaryVersion = crossValue
   override def moduleDeps =
     super.moduleDeps ++ Seq(`mill-mima-worker-api`)
-  override def artifactName = s"mill-mima_mill$millBinaryVersion"
+  override def artifactName = s"mill-mima_mill1" // 1 should be $millBinaryVersion
   def mimaPreviousVersions = Seq.empty[String]
   override def sources = T.sources(
     super.sources() ++ Seq(
@@ -89,9 +89,7 @@ trait MillMimaCross
       .map(PathRef(_))
   )
   override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
-    if (isMill1)
-      ivy"com.lihaoyi::mill-libs-scalalib:${millVersion(millBinaryVersion)}"
-    else ivy"com.lihaoyi::mill-scalalib:${millVersion(millBinaryVersion)}"
+    ivy"com.lihaoyi::mill-libs:${millVersion(millBinaryVersion)}"
   )
   override def buildInfoMembers = Task {
     Seq(
@@ -111,10 +109,10 @@ trait MillMimaCross
         s"${millMima.pomSettings().organization}-${millMima.artifactId()}"
           .replaceAll("[.-]", "_")
       val localClasspathString =
-        millMima.runClasspath().map(_.path).mkString("\n")
+        millMima.localClasspath().map(_.path).mkString("\n")
       Map(
         "MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString,
-        "MILL_LOCAL_TEST_OVERRIDE_CLASSPATH" -> localClasspathString
+        "MILL_LOCAL_TEST_OVERRIDE_com_github_lolgab_mill_mima_mill1_3" -> localClasspathString
       )
     }
 
