@@ -1,7 +1,6 @@
 package com.github.lolgab.mill.mima.worker
 
 import com.github.lolgab.mill.mima.worker.api.MimaWorkerApi
-import mill.Agg
 import mill.PathRef
 import mill.Task
 import mill.define.Discover
@@ -10,9 +9,7 @@ import mill.define.TaskCtx
 class MimaWorker {
   private var scalaInstanceCache = Option.empty[(Long, MimaWorkerApi)]
 
-  def impl(
-      mimaWorkerClasspath: Seq[PathRef]
-  )(using TaskCtx): MimaWorkerApi = {
+  def impl(mimaWorkerClasspath: Seq[PathRef]): MimaWorkerApi = {
     val classloaderSig = mimaWorkerClasspath.hashCode
     scalaInstanceCache match {
       case Some((sig, bridge)) if sig == classloaderSig => bridge

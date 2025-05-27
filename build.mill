@@ -66,8 +66,6 @@ trait Common extends ScalaModule with PublishModule with ScalafixModule {
 
   def scalacOptions =
     super.scalacOptions() ++ Seq("-Wunused:all", "-deprecation")
-
-  def scalafixIvyDeps = Agg(ivy"com.github.liancheng::organize-imports:0.6.0")
 }
 
 object `mill-mima` extends Cross[MillMimaCross](millBinaryVersions)
@@ -88,7 +86,7 @@ trait MillMimaCross
     )
       .map(PathRef(_))
   )
-  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+  override def compileIvyDeps = super.compileIvyDeps() ++ Seq(
     ivy"com.lihaoyi::mill-libs:${millVersion(millBinaryVersion)}"
   )
   override def buildInfoMembers = Task {

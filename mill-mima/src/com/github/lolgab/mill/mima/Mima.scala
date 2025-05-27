@@ -67,12 +67,12 @@ trait Mima extends JavaModule with OfflineSupportModule {
   private[mima] def resolvedMimaPreviousArtifacts: T[Seq[(Dep, PathRef)]] =
     Task {
       val deps = mimaPreviousArtifacts()
-      val builder = Agg.newBuilder[(Dep, PathRef)]
+      val builder = Seq.newBuilder[(Dep, PathRef)]
       var failure = null.asInstanceOf[Result[Seq[(Dep, PathRef)]]]
       deps.foreach { dep =>
         Lib.resolveDependencies(
           repositories = repositoriesTask(),
-          deps = Agg(dep)
+          deps = Seq(dep)
             .map(bindDependency())
             .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
           checkGradleModules = false
@@ -136,7 +136,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
       .Anon {
         Lib.resolveDependencies(
           repositoriesTask(),
-          Agg(
+          Seq(
             mvn"com.github.lolgab:mill-mima-worker-impl_3:${MimaBuildInfo.publishVersion}"
               .exclude("com.github.lolgab" -> s"mill-mima-worker-api_3"),
             mvn"com.typesafe::mima-core:${mimaVersion()}"
@@ -170,7 +170,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
     Task.Command {
       def prettyDep(dep: Dep): String = {
-        s"${dep.dep.module.orgName}:${dep.dep.version}"
+        s"${dep.dep.module.orgName}:${dep.dep.versionConstraint}"
       }
       val log = Task.log
 
