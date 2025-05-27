@@ -10,36 +10,39 @@ object IntegrationTests extends TestSuite {
   // publishLocal mill-mima on temporary ivy.home
   os.call(
     cmd = (
-      millExecutable,
+      "./mill",
       "--no-build-lock",
       "__.publishLocal",
       "--localIvyRepo",
       tempDir / "local"
     ),
-    cwd = os.Path(sys.env("MILL_WORKSPACE_ROOT"))
+    cwd = os.Path(sys.env("MILL_WORKSPACE_ROOT")),
+    env = Map("MILL_MIMA_FORCED_VERSION" -> "TEST")
   )
 
   def tests: Tests = Tests {
 
-    class MyTester(folder: String)
-        extends IntegrationTester(
-          clientServerMode = false,
-          workspaceSourcePath = resourceFolder / folder,
-          millExecutable = millExecutable
-        ) {
+    def buildTester(folder: String) = IntegrationTester(
+      daemonMode = false,
+      workspaceSourcePath = resourceFolder / folder,
+      millExecutable = millExecutable
+    )
+
+    extension (tester: IntegrationTester) {
       def publishLocal(module: String) =
-        eval(
+        tester.eval(
           (
             s"$module.publishLocal",
             "--localIvyRepo",
             tempDir / "local"
           )
         )
-      def myEval(cmd: String) = eval(cmd = (s"-Divy.home=${tempDir}", cmd))
+      def myEval(cmd: String) =
+        tester.eval(cmd = ("--define", s"ivy.home=${tempDir}", cmd))
     }
 
     test("simple") {
-      val tester = new MyTester("simple")
+      val tester = buildTester("simple")
 
       val res1 = tester.publishLocal("prev")
       assert(res1.isSuccess)
@@ -54,7 +57,7 @@ object IntegrationTests extends TestSuite {
       )
     }
     test("filters") {
-      val tester = new MyTester("filters")
+      val tester = buildTester("filters")
 
       val res1 = tester.publishLocal("prev")
       assert(res1.isSuccess)
@@ -63,7 +66,7 @@ object IntegrationTests extends TestSuite {
       assert(res2.isSuccess)
     }
     test("previous-versions") {
-      val tester = new MyTester("previous-versions")
+      val tester = buildTester("previous-versions")
 
       tester.publishLocal("prev")
       tester.publishLocal("prev.js")
@@ -79,7 +82,7 @@ object IntegrationTests extends TestSuite {
       assert(!res4.isSuccess)
     }
     test("java") {
-      val tester = new MyTester("java")
+      val tester = buildTester("java")
 
       val res1 = tester.publishLocal("prev")
       assert(res1.isSuccess)
@@ -93,7 +96,7 @@ object IntegrationTests extends TestSuite {
       )
     }
     test("not-publish-module") {
-      val tester = new MyTester("not-publish-module")
+      val tester = buildTester("not-publish-module")
 
       val res1 = tester.publishLocal("prev")
       assert(res1.isSuccess)
@@ -107,7 +110,7 @@ object IntegrationTests extends TestSuite {
       )
     }
     test("mima-version") {
-      val tester = new MyTester("mima-version")
+      val tester = buildTester("mima-version")
 
       val res1 = tester.publishLocal("prev")
       assert(res1.isSuccess)

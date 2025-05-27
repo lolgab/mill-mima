@@ -37,11 +37,11 @@ object curr extends Common with Mima {
 
 val repo = sys.props("ivy.home") + "/local"
 
-def verify() = T.command {
+def verify() = Task.Command {
   assert(curr.mimaPreviousArtifacts().iterator.size == 2)
   ()
 }
 
-def verifyFail() = T.command {
+def verifyFail() = Task.Command {
   curr.mimaReportBinaryIssues()()
 }

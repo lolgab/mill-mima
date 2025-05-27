@@ -1,24 +1,21 @@
 package com.github.lolgab.mill.mima.worker
 
 import com.github.lolgab.mill.mima.worker.api.MimaWorkerApi
-import mill.Agg
 import mill.PathRef
-import mill.T
+import mill.Task
 import mill.define.Discover
-import mill.define.Worker
+import mill.define.TaskCtx
 
 class MimaWorker {
   private var scalaInstanceCache = Option.empty[(Long, MimaWorkerApi)]
 
-  def impl(
-      mimaWorkerClasspath: Agg[PathRef]
-  )(implicit ctx: mill.api.Ctx.Home): MimaWorkerApi = {
+  def impl(mimaWorkerClasspath: Seq[PathRef]): MimaWorkerApi = {
     val classloaderSig = mimaWorkerClasspath.hashCode
     scalaInstanceCache match {
       case Some((sig, bridge)) if sig == classloaderSig => bridge
       case _ =>
-        val cl = mill.api.ClassLoader.create(
-          mimaWorkerClasspath.map(_.path.toIO.toURI.toURL).iterator.to(Seq),
+        val cl = mill.util.Jvm.createClassLoader(
+          mimaWorkerClasspath.map(_.path).toSeq,
           parent = getClass.getClassLoader,
           sharedLoader = getClass.getClassLoader,
           sharedPrefixes = Seq("com.github.lolgab.mill.mima.worker.api.")
@@ -45,7 +42,7 @@ class MimaWorker {
 }
 
 object MimaWorkerExternalModule extends mill.define.ExternalModule {
-  def mimaWorker: Worker[MimaWorker] = T.worker {
+  def mimaWorker: Task.Worker[MimaWorker] = Task.Worker {
     new MimaWorker()
   }
   lazy val millDiscover = Discover[this.type]

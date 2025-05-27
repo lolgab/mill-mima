@@ -3,11 +3,8 @@ package com.github.lolgab.mill.mima
 import com.github.lolgab.mill.mima.worker._
 import mill._
 import mill.api.Result
-import mill.define.Command
-import mill.define.Target
 import mill.define.Task
 import mill.scalalib._
-import mill.scalalib.api.ZincWorkerUtil.scalaBinaryVersion
 
 import scala.util.chaining._
 
@@ -16,50 +13,46 @@ trait Mima extends JavaModule with OfflineSupportModule {
   private def publishDataTask: Task[Option[(String, String, String)]] =
     this match {
       case m: PublishModule =>
-        T.task {
+        Task.Anon {
           Some(
             (m.pomSettings().organization, m.artifactId(), m.publishVersion())
           )
         }
-      case _ => T.task { None }
+      case _ => Task.Anon { None }
     }
 
   /** Set of versions to check binary compatibility against. */
-  def mimaPreviousVersions: Target[Seq[String]] = T { Seq.empty[String] }
+  def mimaPreviousVersions: Target[Seq[String]] = Task { Seq.empty[String] }
 
   /** Set of artifacts to check binary compatibility against. By default this is
     * derived from [[mimaPreviousVersions]].
     */
-  def mimaPreviousArtifacts: Target[Agg[Dep]] = T {
+  def mimaPreviousArtifacts: Target[Seq[Dep]] = Task {
     val publishData = publishDataTask()
     val versions = mimaPreviousVersions().distinct
     if (versions.isEmpty)
       Result.Failure(
-        "No previous artifacts configured. Please override mimaPreviousVersions or mimaPreviousArtifacts.",
-        Some(Agg.empty[Dep])
+        "No previous artifacts configured. Please override mimaPreviousVersions or mimaPreviousArtifacts."
       )
     else
       publishData match {
         case Some((organization, artifactId, _)) =>
           Result.Success(
-            Agg.from(
-              versions.map(version => ivy"$organization:$artifactId:$version")
-            )
+            versions.map(version => mvn"$organization:$artifactId:$version")
           )
         case None =>
           Result.Failure(
-            "The module is not a PublishModule so it requires setting mimaPreviousArtifacts manually. Please override mimaPreviousArtifacts or extend PublishModule.",
-            Some(Agg.empty[Dep])
+            "The module is not a PublishModule so it requires setting mimaPreviousArtifacts manually. Please override mimaPreviousArtifacts or extend PublishModule."
           )
       }
   }
 
-  private def mimaCheckDirectionInput = T.input {
-    T.env.get("MIMA_CHECK_DIRECTION")
+  private def mimaCheckDirectionInput = Task.Input {
+    Task.env.get("MIMA_CHECK_DIRECTION")
   }
 
   /** Compatibility checking direction. */
-  def mimaCheckDirection: Target[CheckDirection] = T {
+  def mimaCheckDirection: Target[CheckDirection] = Task {
     mimaCheckDirectionInput() match {
       case Some("both")            => Result.Success(CheckDirection.Both)
       case Some("forward")         => Result.Success(CheckDirection.Forward)
@@ -71,23 +64,24 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
   }
 
-  private[mima] def resolvedMimaPreviousArtifacts: T[Agg[(Dep, PathRef)]] =
+  private[mima] def resolvedMimaPreviousArtifacts: T[Seq[(Dep, PathRef)]] =
     Task {
       val deps = mimaPreviousArtifacts()
-      val builder = Agg.newBuilder[(Dep, PathRef)]
-      var failure = null.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+      val builder = Seq.newBuilder[(Dep, PathRef)]
+      var failure = null.asInstanceOf[Result[Seq[(Dep, PathRef)]]]
       deps.foreach { dep =>
         Lib.resolveDependencies(
           repositories = repositoriesTask(),
-          deps = Agg(dep)
+          deps = Seq(dep)
             .map(bindDependency())
             .map(dep => dep.copy(dep = dep.dep.withTransitive(false))),
-          ctx = Some(implicitly[mill.api.Ctx.Log])
+          checkGradleModules = false
+          // ctx = Some(implicitly[mill.api.Ctx.Log])
         ) match {
           case Result.Success(resolved) =>
             builder += (dep -> resolved.iterator.next())
           case other =>
-            failure = other.asInstanceOf[Result[Agg[(Dep, PathRef)]]]
+            failure = other.asInstanceOf[Result[Seq[(Dep, PathRef)]]]
         }
       }
       if (failure == null) Result.Success(builder.result())
@@ -97,7 +91,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
   /** Filters to apply to binary issues found. Applies both to backward and
     * forward binary compatibility checking.
     */
-  def mimaBinaryIssueFilters: Target[Seq[ProblemFilter]] = T {
+  def mimaBinaryIssueFilters: Target[Seq[ProblemFilter]] = Task {
     Seq.empty[ProblemFilter]
   }
 
@@ -105,7 +99,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
     * checked against. These filters only apply to backward compatibility
     * checking.
     */
-  def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = T {
+  def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = Task {
     Map.empty[String, Seq[ProblemFilter]]
   }
 
@@ -113,42 +107,45 @@ trait Mima extends JavaModule with OfflineSupportModule {
     * checked against. These filters only apply to forward compatibility
     * checking.
     */
-  def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = T {
+  def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = Task {
     Map.empty[String, Seq[ProblemFilter]]
   }
 
   /** The fully-qualified class names of annotations that exclude parts of the
     * API from problem checking.
     */
-  def mimaExcludeAnnotations: Target[Seq[String]] = T {
+  def mimaExcludeAnnotations: Target[Seq[String]] = Task {
     Seq.empty[String]
   }
 
   /** If true, report `IncompatibleSignatureProblem`s.
     */
-  def mimaReportSignatureProblems: Target[Boolean] = T {
+  def mimaReportSignatureProblems: Target[Boolean] = Task {
     false
   }
 
   /** Underlying com.typesafe::mima-core version used. Find the latest version
     * here: https://github.com/lightbend-labs/mima/releases
     */
-  def mimaVersion: Target[String] = T {
+  def mimaVersion: Target[String] = Task {
     MimaBuildInfo.mimaDefaultVersion
   }
 
-  private def mimaWorker: Task[worker.api.MimaWorkerApi] = T.task {
-    val mimaWorkerClasspath = Task.Anon {
-      Lib.resolveDependencies(
-        repositoriesTask(),
-        Agg(
-          ivy"com.github.lolgab:mill-mima-worker-impl_2.13:${MimaBuildInfo.publishVersion}"
-            .exclude("com.github.lolgab" -> "mill-mima-worker-api_2.13"),
-          ivy"com.typesafe::mima-core:${mimaVersion()}"
-        ).map(Lib.depToBoundDep(_, mill.main.BuildInfo.scalaVersion)),
-        ctx = Some(T.log)
-      )
-    }()
+  private def mimaWorker: Task[worker.api.MimaWorkerApi] = Task.Anon {
+    val mimaWorkerClasspath = Task
+      .Anon {
+        Lib.resolveDependencies(
+          repositoriesTask(),
+          Seq(
+            mvn"com.github.lolgab:mill-mima-worker-impl_3:${MimaBuildInfo.publishVersion}"
+              .exclude("com.github.lolgab" -> s"mill-mima-worker-api_3"),
+            mvn"com.typesafe::mima-core:${mimaVersion()}"
+          ).map(Lib.depToBoundDep(_, mill.util.BuildInfo.scalaVersion)),
+          ctx = Some(Task.ctx()),
+          checkGradleModules = false
+        )
+      }
+      .apply()
 
     MimaWorkerExternalModule.mimaWorker().impl(mimaWorkerClasspath)
   }
@@ -159,25 +156,29 @@ trait Mima extends JavaModule with OfflineSupportModule {
     * Up until version mill-mima `0.0.24`, this was implemented as
     * [[compile]]`().classes`, for compatibility to the sbt plugin.
     */
-  def mimaCurrentArtifact: T[PathRef] = T { jar() }
+  def mimaCurrentArtifact: T[PathRef] = Task { jar() }
 
   def mimaReportBinaryIssues(): Command[Unit] = {
     val scalaBinVersionTask: Task[Option[String]] = this match {
       case m: ScalaModule =>
-        T.task { Some(scalaBinaryVersion(m.scalaVersion())) }
-      case _ => T.task { None }
+        Task.Anon {
+          Some(
+            mill.scalalib.api.JvmWorkerUtil.scalaBinaryVersion(m.scalaVersion())
+          )
+        }
+      case _ => Task.Anon { None }
     }
-    T.command {
+    Task.Command {
       def prettyDep(dep: Dep): String = {
-        s"${dep.dep.module.orgName}:${dep.dep.version}"
+        s"${dep.dep.module.orgName}:${dep.dep.versionConstraint}"
       }
-      val log = T.ctx().log
+      val log = Task.log
 
       val runClasspathIO =
         runClasspath().iterator.map(_.path).filter(os.exists).map(_.toIO).toSeq
       val current = mimaCurrentArtifact().path.pipe {
         case p if os.exists(p) => p
-        case _                 => (T.dest / "emptyClasses").tap(os.makeDir)
+        case _                 => (Task.dest / "emptyClasses").tap(os.makeDir)
       }.toIO
 
       val previous = resolvedMimaPreviousArtifacts().iterator.map {
@@ -210,7 +211,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
         scalaBinVersionTask(),
         log.debug(_),
         log.error(_),
-        log.outputStream.println(_),
+        log.streams.out.println(_),
         checkDirection,
         runClasspathIO,
         previous,
@@ -227,15 +228,16 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
   }
 
-  override def prepareOffline(all: mainargs.Flag): Command[Unit] = {
+  override def prepareOffline(all: mainargs.Flag): Command[Seq[PathRef]] = {
     val task = if (all.value) {
       resolvedMimaPreviousArtifacts.map(_ => ())
     } else {
-      T.task { () }
+      Task.Anon { () }
     }
-    T.command {
-      super.prepareOffline(all)()
+    Task.Command {
+      val res = super.prepareOffline(all)()
       task()
+      res
     }
   }
 

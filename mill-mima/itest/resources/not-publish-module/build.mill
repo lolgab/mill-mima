@@ -19,7 +19,7 @@ object curr extends ScalaModule with Mima {
   override def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
 }
 
-def verify() = T.command {
+def verify() = Task.Command {
   curr.mimaReportBinaryIssues()()
   ()
 }

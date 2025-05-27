@@ -1,6 +1,6 @@
 package build
 
-import $ivy.`com.github.lolgab::mill-mima::TEST`
+import $mvn.`com.github.lolgab::mill-mima::TEST`
 
 import mill._
 import mill.scalalib._
