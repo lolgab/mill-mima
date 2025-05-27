@@ -13,10 +13,11 @@ object ProblemFilter {
       problem = classTag[P].runtimeClass.getSimpleName()
     )
 
-  private case class ProblemFilterImpl(name: String,problem: String) derives ReadWriter
+  private case class ProblemFilterImpl(name: String, problem: String)
+      derives ReadWriter
 
   given ReadWriter[ProblemFilter] = summon[ReadWriter[ProblemFilterImpl]].bimap(
-        pf => ProblemFilterImpl(pf.name, pf.problem),
-        pfi => new ProblemFilter(pfi.name, pfi.problem)
-      )
+    pf => ProblemFilterImpl(pf.name, pf.problem),
+    pfi => new ProblemFilter(pfi.name, pfi.problem)
+  )
 }

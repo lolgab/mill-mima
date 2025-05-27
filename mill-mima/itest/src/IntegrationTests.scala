@@ -28,7 +28,7 @@ object IntegrationTests extends TestSuite {
       millExecutable = millExecutable
     )
 
-    extension(tester: IntegrationTester) {
+    extension (tester: IntegrationTester) {
       def publishLocal(module: String) =
         tester.eval(
           (
@@ -37,7 +37,8 @@ object IntegrationTests extends TestSuite {
             tempDir / "local"
           )
         )
-      def myEval(cmd: String) = tester.eval(cmd = ("--define", s"ivy.home=${tempDir}", cmd))
+      def myEval(cmd: String) =
+        tester.eval(cmd = ("--define", s"ivy.home=${tempDir}", cmd))
     }
 
     test("simple") {
