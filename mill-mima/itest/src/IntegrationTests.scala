@@ -23,7 +23,7 @@ object IntegrationTests extends TestSuite {
   def tests: Tests = Tests {
 
     def buildTester(folder: String) = IntegrationTester(
-      daemonMode = true,
+      daemonMode = false,
       workspaceSourcePath = resourceFolder / folder,
       millExecutable = millExecutable
     )
@@ -37,7 +37,7 @@ object IntegrationTests extends TestSuite {
             tempDir / "local"
           )
         )
-      def myEval(cmd: String) = tester.eval(cmd = (s"-ivy.home=${tempDir}", cmd))
+      def myEval(cmd: String) = tester.eval(cmd = ("--define", s"ivy.home=${tempDir}", cmd))
     }
 
     test("simple") {
