@@ -31,7 +31,7 @@ object curr extends Common with Mima {
   object js extends Js
 }
 
-def verify() = T.command {
+def verify() = Task.Command {
   // tests mimaPreviousVersions
   assertEquals(curr.mimaPreviousArtifacts(), Agg(ivy"org:prev_2.13:0.0.1"))
   assertEquals(
@@ -40,10 +40,10 @@ def verify() = T.command {
   )
 }
 
-def verifyFail() = T.command {
+def verifyFail() = Task.Command {
   curr.mimaReportBinaryIssues()()
 }
 
-def verifyFailJs() = T.command {
+def verifyFailJs() = Task.Command {
   curr.js.mimaReportBinaryIssues()()
 }

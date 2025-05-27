@@ -1,6 +1,7 @@
-package build
+//| mvnDeps:
+//|   - com.github.lolgab::mill-mima::TEST
 
-import $ivy.`com.github.lolgab::mill-mima::TEST`
+package build
 
 import mill._
 
@@ -20,7 +21,7 @@ object curr extends Common with Mima {
   override def mimaCheckDirection = CheckDirection.Backward
 }
 
-def verify() = T.command {
+def verify() = Task.Command {
   curr.mimaReportBinaryIssues()()
   ()
 }

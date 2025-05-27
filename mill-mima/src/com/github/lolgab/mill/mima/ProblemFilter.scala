@@ -1,6 +1,7 @@
 package com.github.lolgab.mill.mima
 
-import scala.annotation.nowarn
+import upickle.default.ReadWriter
+
 import scala.reflect.ClassTag
 import scala.reflect.classTag
 
@@ -12,10 +13,10 @@ object ProblemFilter {
       problem = classTag[P].runtimeClass.getSimpleName()
     )
 
-  implicit val problemFilterRW: upickle.default.ReadWriter[ProblemFilter] =
-    upickle.default.macroRW[ProblemFilter]
+  private case class ProblemFilterImpl(name: String,problem: String) derives ReadWriter
 
-  @nowarn("msg=private method apply in object ProblemFilter is never used")
-  private def apply(name: String, problem: String) =
-    new ProblemFilter(name = name, problem = problem)
+  given ReadWriter[ProblemFilter] = summon[ReadWriter[ProblemFilterImpl]].bimap(
+        pf => ProblemFilterImpl(pf.name, pf.problem),
+        pfi => new ProblemFilter(pfi.name, pfi.problem)
+      )
 }
