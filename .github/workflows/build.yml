@@ -67,12 +67,13 @@ jobs:
             echo $SONATYPE_PGP_PRIVATE_KEY | base64 --decode > gpg_key
             gpg --import --no-tty --batch --yes gpg_key
             rm gpg_key
-            ./mill --no-server --disable-ticker mill.scalalib.SonatypeCentralPublishModule/publishAll \
-              --sonatypeCreds $SONATYPE_USER:$SONATYPE_PASSWORD \
+            ./mill mill.scalalib.SonatypeCentralPublishModule/publishAll \
+              --username $SONATYPE_USER \
+              --password $SONATYPE_PASSWORD \
               --gpgArgs --passphrase=$SONATYPE_PGP_PRIVATE_KEY_PASSWORD,--no-tty,--pinentry-mode,loopback,--batch,--yes,-a,-b \
               --publishArtifacts __.publishArtifacts \
-              --readTimeout 600000 \
-              --awaitTimeout 600000 \
-              --release true \
-              --signed true
+              --readTimeout  36000 \
+              --awaitTimeout 36000 \
+              --connectTimeout 36000 \
+              --shouldRelease true
           fi
