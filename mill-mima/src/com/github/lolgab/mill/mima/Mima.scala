@@ -139,7 +139,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
           Seq(
             mvn"com.github.lolgab:mill-mima-worker-impl_3:${MimaBuildInfo.publishVersion}"
               .exclude("com.github.lolgab" -> s"mill-mima-worker-api_3"),
-            mvn"com.typesafe::mima-core:${mimaVersion()}"
+            mvn"com.typesafe:mima-core_2.13:${mimaVersion()}"
           ).map(Lib.depToBoundDep(_, mill.util.BuildInfo.scalaVersion)),
           ctx = Some(Task.ctx()),
           checkGradleModules = false
