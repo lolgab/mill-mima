@@ -94,7 +94,7 @@ class MimaWorkerImpl extends MimaWorkerApi {
   ) = {
     scalaBinaryVersion match {
       case Some("3" | "2.13" | "2.12" | "2.11") | None => // ok
-      case Some(other) =>
+      case Some(other)                                 =>
         throw new IllegalArgumentException(
           s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $other"
         )

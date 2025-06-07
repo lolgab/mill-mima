@@ -57,7 +57,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
       case Some("both")            => Result.Success(CheckDirection.Both)
       case Some("forward")         => Result.Success(CheckDirection.Forward)
       case Some("backward") | None => Result.Success(CheckDirection.Backward)
-      case Some(other) =>
+      case Some(other)             =>
         Result.Failure(
           s"Invalid check direction \"$other\". Valid values are \"backward\", \"forward\" or \"both\"."
         )
