@@ -13,7 +13,7 @@ class MimaWorker {
     val classloaderSig = mimaWorkerClasspath.hashCode
     scalaInstanceCache match {
       case Some((sig, bridge)) if sig == classloaderSig => bridge
-      case _ =>
+      case _                                            =>
         val cl = mill.util.Jvm.createClassLoader(
           mimaWorkerClasspath.map(_.path).toSeq,
           parent = getClass.getClassLoader,

@@ -6,7 +6,7 @@ private[com] object MyProblemReporting {
       filters: Seq[ProblemFilter],
       versionedFilters: Map[String, Seq[ProblemFilter]]
   )(problem: Problem): Boolean = versionOpt match {
-    case None => filters.forall(_(problem))
+    case None          => filters.forall(_(problem))
     case Some(version) =>
       ProblemReporting.isReported(version, filters, versionedFilters)(problem)
   }
