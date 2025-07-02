@@ -125,7 +125,7 @@ checking.
 Signature: 
 
 ```scala
-def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
+def mimaBackwardIssueFilters: T[Map[String, Seq[ProblemFilter]]]
 ```
 
 ### mimaForwardIssueFilters
@@ -137,7 +137,7 @@ checking.
 Signature: 
 
 ```scala
-def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]]
+def mimaForwardIssueFilters: T[Map[String, Seq[ProblemFilter]]]
 ```
 
 ### IncompatibleSignatureProblem

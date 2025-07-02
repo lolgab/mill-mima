@@ -3,8 +3,8 @@ package com.github.lolgab.mill.mima.worker
 import com.github.lolgab.mill.mima.worker.api.MimaWorkerApi
 import mill.PathRef
 import mill.Task
-import mill.define.Discover
-import mill.define.TaskCtx
+import mill.api.Discover
+import mill.api.TaskCtx
 
 class MimaWorker {
   private var scalaInstanceCache = Option.empty[(Long, MimaWorkerApi)]
@@ -41,7 +41,7 @@ class MimaWorker {
   }
 }
 
-object MimaWorkerExternalModule extends mill.define.ExternalModule {
+object MimaWorkerExternalModule extends mill.api.ExternalModule {
   def mimaWorker: Task.Worker[MimaWorker] = Task.Worker {
     new MimaWorker()
   }

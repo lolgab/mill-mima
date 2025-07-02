@@ -3,7 +3,6 @@ package com.github.lolgab.mill.mima
 import com.github.lolgab.mill.mima.worker._
 import mill._
 import mill.api.Result
-import mill.define.Task
 import mill.scalalib._
 
 import scala.util.chaining._
@@ -22,12 +21,12 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
 
   /** Set of versions to check binary compatibility against. */
-  def mimaPreviousVersions: Target[Seq[String]] = Task { Seq.empty[String] }
+  def mimaPreviousVersions: T[Seq[String]] = Task { Seq.empty[String] }
 
   /** Set of artifacts to check binary compatibility against. By default this is
     * derived from [[mimaPreviousVersions]].
     */
-  def mimaPreviousArtifacts: Target[Seq[Dep]] = Task {
+  def mimaPreviousArtifacts: T[Seq[Dep]] = Task {
     val publishData = publishDataTask()
     val versions = mimaPreviousVersions().distinct
     if (versions.isEmpty)
@@ -52,7 +51,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
   }
 
   /** Compatibility checking direction. */
-  def mimaCheckDirection: Target[CheckDirection] = Task {
+  def mimaCheckDirection: T[CheckDirection] = Task {
     mimaCheckDirectionInput() match {
       case Some("both")            => Result.Success(CheckDirection.Both)
       case Some("forward")         => Result.Success(CheckDirection.Forward)
@@ -91,7 +90,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
   /** Filters to apply to binary issues found. Applies both to backward and
     * forward binary compatibility checking.
     */
-  def mimaBinaryIssueFilters: Target[Seq[ProblemFilter]] = Task {
+  def mimaBinaryIssueFilters: T[Seq[ProblemFilter]] = Task {
     Seq.empty[ProblemFilter]
   }
 
@@ -99,7 +98,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
     * checked against. These filters only apply to backward compatibility
     * checking.
     */
-  def mimaBackwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = Task {
+  def mimaBackwardIssueFilters: T[Map[String, Seq[ProblemFilter]]] = Task {
     Map.empty[String, Seq[ProblemFilter]]
   }
 
@@ -107,27 +106,27 @@ trait Mima extends JavaModule with OfflineSupportModule {
     * checked against. These filters only apply to forward compatibility
     * checking.
     */
-  def mimaForwardIssueFilters: Target[Map[String, Seq[ProblemFilter]]] = Task {
+  def mimaForwardIssueFilters: T[Map[String, Seq[ProblemFilter]]] = Task {
     Map.empty[String, Seq[ProblemFilter]]
   }
 
   /** The fully-qualified class names of annotations that exclude parts of the
     * API from problem checking.
     */
-  def mimaExcludeAnnotations: Target[Seq[String]] = Task {
+  def mimaExcludeAnnotations: T[Seq[String]] = Task {
     Seq.empty[String]
   }
 
   /** If true, report `IncompatibleSignatureProblem`s.
     */
-  def mimaReportSignatureProblems: Target[Boolean] = Task {
+  def mimaReportSignatureProblems: T[Boolean] = Task {
     false
   }
 
   /** Underlying com.typesafe::mima-core version used. Find the latest version
     * here: https://github.com/lightbend-labs/mima/releases
     */
-  def mimaVersion: Target[String] = Task {
+  def mimaVersion: T[String] = Task {
     MimaBuildInfo.mimaDefaultVersion
   }
 
@@ -163,7 +162,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
       case m: ScalaModule =>
         Task.Anon {
           Some(
-            mill.scalalib.api.JvmWorkerUtil.scalaBinaryVersion(m.scalaVersion())
+            mill.jvmlib.api.JvmWorkerUtil.scalaBinaryVersion(m.scalaVersion())
           )
         }
       case _ => Task.Anon { None }

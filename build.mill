@@ -33,11 +33,11 @@ val scala3 = "3.7.1"
 
 val mimaDefaultVersion = "1.1.4"
 val millVersions = latestMillDevVersion match {
-  case None          => Seq("1.0.0-RC2")
+  case None          => Seq("1.0.0-RC3")
   case Some(version) => Seq(version)
 }
 val itestMillVersions = latestMillDevVersion match {
-  case None          => Seq("1.0.0-RC2")
+  case None          => Seq("1.0.0-RC3")
   case Some(version) => Seq(version)
 }
 val millBinaryVersions = millVersions.map(millBinaryVersion)
