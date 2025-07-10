@@ -162,7 +162,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
       case m: ScalaModule =>
         Task.Anon {
           Some(
-            mill.jvmlib.api.JvmWorkerUtil.scalaBinaryVersion(m.scalaVersion())
+            mill.javalib.api.JvmWorkerUtil.scalaBinaryVersion(m.scalaVersion())
           )
         }
       case _ => Task.Anon { None }
