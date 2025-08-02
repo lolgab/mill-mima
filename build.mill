@@ -29,7 +29,7 @@ val latestMillDevVersion: Option[String] = {
     }
 }
 
-val scala3 = "3.7.1"
+val scala3 = "3.7.2"
 
 val mimaDefaultVersion = "1.1.4"
 val millVersions = latestMillDevVersion match {
