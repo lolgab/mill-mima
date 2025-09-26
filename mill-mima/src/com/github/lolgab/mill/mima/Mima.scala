@@ -169,7 +169,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
     }
     Task.Command {
       def prettyDep(dep: Dep): String = {
-        s"${dep.dep.module.orgName}:${dep.dep.versionConstraint}"
+        s"${dep.dep.module.orgName}:${dep.dep.versionConstraint.asString}"
       }
       val log = Task.log
 
