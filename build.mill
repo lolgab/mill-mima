@@ -36,7 +36,7 @@ val latestMillDevVersion: Option[String] = {
 
 val scala3 = "3.7.3"
 
-val mimaDefaultVersion = "1.1.4"
+val mimaDefaultVersion = "1.1.5"
 val millVersions = latestMillDevVersion match {
   case None          => Seq("1.0.0")
   case Some(version) => Seq(version)
@@ -138,6 +138,6 @@ object `mill-mima-worker-api` extends Common
 object `mill-mima-worker-impl` extends Common {
   override def moduleDeps = super.moduleDeps ++ Seq(`mill-mima-worker-api`)
   override def compileMvnDeps = super.compileMvnDeps() ++ Seq(
-    mvn"com.typesafe:mima-core_2.13:$mimaDefaultVersion"
+    mvn"com.typesafe::mima-core:$mimaDefaultVersion"
   )
 }
