@@ -1,0 +1,49 @@
+//| mvnDeps:
+//|   - com.github.lolgab::mill-mima::TEST
+
+package build
+
+import mill._
+import mill.scalalib._
+import mill.scalalib.publish._
+import com.github.lolgab.mill.mima._
+
+trait Common extends JavaModule with PublishModule {
+  def pomSettings =
+    PomSettings("", organization = "org", "", Seq(), VersionControl(), Seq())
+}
+
+object prev extends Common {
+  def publishVersion = "0.0.1"
+}
+
+object prev03 extends Common {
+  override def moduleDir = prev.moduleDir
+  override def artifactName = "prev"
+  def publishVersion = "0.0.3"
+}
+
+trait CurrentBase extends Common with Mima {
+  def publishVersion = "0.0.4"
+  override def mimaCheckDirection = CheckDirection.Backward
+  override def mimaBackwardIssueFilters = Task {
+    Map("0.0.2" -> Seq(ProblemFilter.exclude[Problem]("foo.Foo.*")))
+  }
+}
+
+object curr extends CurrentBase {
+  override def mimaPreviousArtifacts = Task(Seq(mvn"org:prev:0.0.1"))
+}
+
+object currAgainst03 extends CurrentBase {
+  override def moduleDir = curr.moduleDir
+  override def mimaPreviousArtifacts = Task(Seq(mvn"org:prev:0.0.3"))
+}
+
+def verifyPassesAgainstOldVersion() = Task.Command {
+  curr.mimaReportBinaryIssues()()
+}
+
+def verifyFailsAgainstNewVersion() = Task.Command {
+  currAgainst03.mimaReportBinaryIssues()()
+}

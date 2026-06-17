@@ -60,6 +60,20 @@ object IntegrationTests extends TestSuite {
       val res2 = tester.myEval("curr.mimaReportBinaryIssues")
       assert(res2.isSuccess)
     }
+    test("version-filters") {
+      val tester = buildTester("version-filters")
+
+      assert(tester.publishLocal("prev").isSuccess)
+      assert(tester.publishLocal("prev03").isSuccess)
+
+      val passAgainstOld =
+        tester.myEval("verifyPassesAgainstOldVersion")
+      assert(passAgainstOld.isSuccess)
+
+      val failAgainstNew =
+        tester.myEval("verifyFailsAgainstNewVersion")
+      assert(!failAgainstNew.isSuccess)
+    }
     test("previous-versions") {
       val tester = buildTester("previous-versions")
 

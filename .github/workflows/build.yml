@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
       with:
@@ -36,13 +36,13 @@ jobs:
     - name: Publish Artifacts
       run: 
         ./mill --no-server --disable-ticker __.publishArtifacts
-    # - name: Test
-    #   run:
-    #     ./mill --no-server --disable-ticker __.test
+    - name: Test
+      run:
+        ./mill --no-server --disable-ticker __.testForked
   publish-sonatype:
     if: github.repository == 'lolgab/mill-mima' && (contains(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       SONATYPE_PGP_PRIVATE_KEY: ${{ secrets.SONATYPE_PGP_PRIVATE_KEY }}
       SONATYPE_PGP_PRIVATE_KEY_PASSWORD: ${{ secrets.SONATYPE_PGP_PRIVATE_KEY_PASSWORD }}

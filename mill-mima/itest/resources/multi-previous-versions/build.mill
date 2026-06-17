@@ -9,7 +9,7 @@ import mill.scalalib.publish._
 import com.github.lolgab.mill.mima._
 
 trait Common extends ScalaModule with PublishModule {
-  def scalaVersion = "2.13.4"
+  def scalaVersion = "2.13.18"
   def pomSettings =
     PomSettings("", organization = "org", "", Seq(), VersionControl(), Seq())
 }
