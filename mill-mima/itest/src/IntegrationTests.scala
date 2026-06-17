@@ -5,28 +5,23 @@ import utest._
 object IntegrationTests extends TestSuite {
   val resourceFolder = os.Path(sys.env("MILL_TEST_RESOURCE_DIR"))
   val millExecutable = os.Path(sys.env("MILL_EXECUTABLE_PATH"))
+  val testVersion = sys.env("MILL_MIMA_TEST_VERSION")
   val tempDir = os.temp.dir()
-
-  // publishLocal mill-mima on temporary ivy.home
-  os.call(
-    cmd = (
-      "./mill",
-      "--no-build-lock",
-      "__.publishLocal",
-      "--localIvyRepo",
-      tempDir / "local"
-    ),
-    cwd = os.Path(sys.env("MILL_WORKSPACE_ROOT")),
-    env = Map("MILL_MIMA_FORCED_VERSION" -> "TEST")
-  )
 
   def tests: Tests = Tests {
 
-    def buildTester(folder: String) = IntegrationTester(
-      daemonMode = false,
-      workspaceSourcePath = resourceFolder / folder,
-      millExecutable = millExecutable
-    )
+    def buildTester(folder: String) = {
+      val tester = IntegrationTester(
+        daemonMode = false,
+        workspaceSourcePath = resourceFolder / folder,
+        millExecutable = millExecutable
+      )
+      tester.modifyFile(
+        tester.workspacePath / "build.mill",
+        _.replace("::TEST", s"::$testVersion")
+      )
+      tester
+    }
 
     extension (tester: IntegrationTester) {
       def publishLocal(module: String) =
@@ -75,7 +70,6 @@ object IntegrationTests extends TestSuite {
       assert(res2.isSuccess)
 
       val res3 = tester.myEval("verifyFail")
-      assert(!res3.isSuccess)
       assert(!res3.isSuccess)
 
       val res4 = tester.myEval("verifyFailJs")

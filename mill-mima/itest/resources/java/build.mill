@@ -1,9 +1,9 @@
+//| mvnDeps:
+//|   - com.github.lolgab::mill-mima::TEST
+
 package build
 
-import $ivy.`com.github.lolgab::mill-mima::TEST`
-
 import mill._
-
 import mill.scalalib._
 import mill.scalalib.publish._
 import com.github.lolgab.mill.mima._
@@ -15,6 +15,6 @@ trait Common extends JavaModule with PublishModule {
 }
 object prev extends Common
 object curr extends Common with Mima {
-  override def mimaPreviousArtifacts = T(Agg(ivy"org:prev:0.0.1"))
+  override def mimaPreviousArtifacts = Task(Seq(mvn"org:prev:0.0.1"))
   override def mimaCheckDirection = CheckDirection.Backward
 }

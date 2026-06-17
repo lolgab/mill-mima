@@ -1,9 +1,9 @@
+//| mvnDeps:
+//|   - com.github.lolgab::mill-mima::TEST
+
 package build
 
-import $ivy.`com.github.lolgab::mill-mima::TEST`
-
 import mill._
-
 import mill.scalalib._
 import mill.scalalib.publish._
 import com.github.lolgab.mill.mima._
@@ -16,7 +16,7 @@ object prev extends ScalaModule with PublishModule {
 }
 object curr extends ScalaModule with Mima {
   def scalaVersion = "2.13.4"
-  override def mimaPreviousArtifacts = T(Agg(ivy"org::prev:0.0.1"))
+  override def mimaPreviousArtifacts = Task(Seq(mvn"org::prev:0.0.1"))
 }
 
 def verify() = Task.Command {
