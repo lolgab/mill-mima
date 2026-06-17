@@ -9,10 +9,14 @@ jobs:
   submit-dependency-graph:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: coursier/cache-action@v6
-      - uses: actions/setup-java@v3
-        with:
-          distribution: "temurin"
-          java-version: "17"
-      - uses: ckipp01/mill-dependency-submission@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Submit dependency graph
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        ./mill --import io.eleven19.mill-github-dependency-graph::mill-github-dependency-graph:0.0.2 \
+                        io.eleven19.mill.github.dependency.graph.Graph/submit
