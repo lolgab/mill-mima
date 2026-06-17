@@ -113,18 +113,30 @@ trait MillMimaCross
       mvn"com.lihaoyi::mill-testkit:${millVersion(millBinaryVersion)}"
     )
     def forkEnv = Task {
-      val artifact =
-        s"${millMima.pomSettings().organization}-${millMima.artifactId()}"
-          .replaceAll("[.-]", "_")
-      val localClasspathString =
-        millMima.localClasspath().map(_.path).mkString("\n")
+      val testRepos = Seq(
+        millMima.publishLocalTestRepo().path.toNIO.toUri.toASCIIString,
+        `mill-mima-worker-api`
+          .publishLocalTestRepo()
+          .path
+          .toNIO
+          .toUri
+          .toASCIIString,
+        `mill-mima-worker-impl`
+          .publishLocalTestRepo()
+          .path
+          .toNIO
+          .toUri
+          .toASCIIString
+      )
+      val repos = testRepos ++
+        Seq(Task.env.getOrElse("COURSIER_REPOSITORIES", "ivy2Local|central"))
       Map(
         "MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString,
-        "MILL_LOCAL_TEST_OVERRIDE_com_github_lolgab_mill_mima_mill1_3" -> localClasspathString
+        "COURSIER_REPOSITORIES" -> repos.mkString("|"),
+        "MILL_MIMA_TEST_VERSION" -> millMima.publishVersion()
       )
     }
 
-    // Create a Mill executable configured for testing our plugin
     object millExecutable extends JavaModule {
       def mvnDeps = Seq(
         mvn"com.lihaoyi:mill-runner-launcher_3:${millVersion(millBinaryVersion)}"
