@@ -29,6 +29,7 @@ class MimaWorkerImpl extends MimaWorkerApi {
     val mimaLib = new MiMaLib(runClasspath.toSeq)
 
     def isReported(
+        prevArtifactVersion: String,
         versionedFilters: Map[String, Seq[ProblemFilter]]
     )(problem: Problem) = {
       val filters = binaryFilters.map(problemFilterToMima)
@@ -36,7 +37,7 @@ class MimaWorkerImpl extends MimaWorkerApi {
         k -> v.map(problemFilterToMima)
       }
       MyProblemReporting.isReported(
-        publishVersion,
+        Some(prevArtifactVersion),
         filters,
         mimaVersionedFilters
       )(problem)
@@ -58,8 +59,10 @@ class MimaWorkerImpl extends MimaWorkerApi {
           case CheckDirection.Forward  => (Nil, checkFC)
           case CheckDirection.Both     => (checkBC, checkFC)
         }
-        val backErrors = backward.filter(isReported(backwardFilters))
-        val forwErrors = forward.filter(isReported(forwardFilters))
+        val backErrors =
+          backward.filter(isReported(prev.version, backwardFilters))
+        val forwErrors =
+          forward.filter(isReported(prev.version, forwardFilters))
         val count = backErrors.size + forwErrors.size
         val filteredCount = backward.size + forward.size - count
         val doLog = if (count == 0) logDebug(_) else logError(_)

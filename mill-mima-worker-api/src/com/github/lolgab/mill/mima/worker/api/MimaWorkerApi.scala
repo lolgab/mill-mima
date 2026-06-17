@@ -20,7 +20,7 @@ trait MimaWorkerApi {
   ): Option[String]
 }
 
-case class Artifact(prettyDep: String, file: File)
+case class Artifact(prettyDep: String, file: File, version: String)
 
 sealed trait CheckDirection
 object CheckDirection {

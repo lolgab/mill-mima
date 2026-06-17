@@ -182,7 +182,7 @@ trait Mima extends JavaModule with OfflineSupportModule {
 
       val previous = resolvedMimaPreviousArtifacts().iterator.map {
         case (dep, artifact) =>
-          worker.api.Artifact(prettyDep(dep), artifact.path.toIO)
+          worker.api.Artifact(prettyDep(dep), artifact.path.toIO, dep.version)
       }.toSeq
 
       val checkDirection = mimaCheckDirection() match {
