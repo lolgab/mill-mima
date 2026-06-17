@@ -1,7 +1,6 @@
 name: github-dependency-graph
 
 on:
-  pull_request:
   push:
     branches:
       - main
