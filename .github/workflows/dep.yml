@@ -18,4 +18,5 @@ jobs:
     - name: Submit dependency graph
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: ./mill io.eleven19.mill.github.dependency.graph.Graph/submit
+      run: ./mill --import io.eleven19.mill-github-dependency-graph::mill-github-dependency-graph:0.0.2 \
+                           io.eleven19.mill.github.dependency.graph.Graph/submit
