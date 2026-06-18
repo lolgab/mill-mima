@@ -4,11 +4,13 @@ Port of the [MiMa Sbt Plugin](https://github.com/lightbend/mima)
 
 ## Getting Started
 
-After importing it in the `build.sc` file:
+After importing it in the `build.mill` file:
 
 ```scala
-import $ivy.`com.github.lolgab::mill-mima::x.y.z`
-import com.github.lolgab.mill.mima._
+//| mvnDeps:
+//|   - com.github.lolgab::mill-mima::x.y.z
+
+import com.github.lolgab.mill.mima.*
 ```
 
 this plugin can be mixed in a `ScalaModule with PublishModule` defining the `mimaPreviousVersions`:
@@ -47,7 +49,7 @@ The required direction of binary compatibility can be set in two ways:
   The possible values are `CheckDirection.Backward` (default), `CheckDirection/Forward` and `CheckDirection.Both`.
 
   This is useful when the setting is static and you want to keep the setting in
-  your `build.sc` file.
+  your `build.mill` file.
 
 ### mimaBinaryIssueFilters
 
@@ -56,7 +58,7 @@ you need to use the `mimaBinaryIssueFilters` setting to filter it out and get `m
 pass, like so:
 
 ```scala
-import com.github.lolgab.mill.mima._
+import com.github.lolgab.mill.mima.*
 
 object mylibrary extends ScalaModule with PublishModule with Mima {
   override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
@@ -70,7 +72,7 @@ object mylibrary extends ScalaModule with PublishModule with Mima {
 You may also use wildcards in the package and/or the top `Problem` parent type for such situations:
 
 ```scala
-import com.github.lolgab.mill.mima._
+import com.github.lolgab.mill.mima.*
 
 override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
   ProblemFilter.exclude[MissingClassProblem]("com.example.mylibrary.internal.*")
@@ -82,7 +84,7 @@ override def mimaBinaryIssueFilters = super.mimaBinaryIssueFilters() ++ Seq(
 The fully-qualified class names of annotations that exclude parts of the API from problem checking.
 
 ```scala
-import com.github.lolgab.mill.mima._
+import com.github.lolgab.mill.mima.*
 
 object mylibrary extends ScalaModule with PublishModule with Mima {
   override def mimaExcludeAnnotations = Seq(
@@ -100,7 +102,7 @@ assumes the same `groupId` and `artifactId`):
 
 ```scala
 def mimaPreviousArtifacts = Agg(
-  ivy"my_group_id::module:my_previous_version"
+  mvn"my_group_id::module:my_previous_version"
 )
 ```
 

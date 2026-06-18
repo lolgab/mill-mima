@@ -3,7 +3,7 @@
 //|   - com.lihaoyi::mill-contrib-versionfile:$MILL_VERSION
 //|   - com.lihaoyi::mill-contrib-buildinfo:$MILL_VERSION
 //|   - com.goyeau::mill-scalafix::0.6.0
-//|   - com.github.lolgab::mill-mima::0.2.0
+//|   - com.github.lolgab::mill-mima::0.2.1
 
 package build
 
